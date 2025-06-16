@@ -92,7 +92,7 @@ class HostBillMCPServer
                 return $this->listAPIMethods($args);
             },
             [
-                'description' => 'List available HostBill API methods with optional filtering',
+                'description' => 'List available HostBill API methods with agent-focused filtering for customer service operations',
                 'inputSchema' => [
                     'type' => 'object',
                     'properties' => [
@@ -102,7 +102,11 @@ class HostBillMCPServer
                         ],
                         'category' => [
                             'type' => 'string',
-                            'description' => 'Filter by method category'
+                            'description' => 'Filter by method category. Agent categories: customer, orders, support, business, management, reports'
+                        ],
+                        'agent_mode' => [
+                            'type' => 'boolean',
+                            'description' => 'Enable agent mode for customer service workflow suggestions and enhanced categorization'
                         ]
                     ]
                 ]
@@ -155,6 +159,27 @@ class HostBillMCPServer
             ]
         );
 
+        // Tool for agent dashboard - quick access to key customer service functions
+        $this->mcp->registerTool(
+            'hostbill_agent_dashboard',
+            function(array $args) {
+                return $this->getAgentDashboard($args);
+            },
+            [
+                'description' => 'Get agent dashboard with quick access to customer service, orders, and support functions',
+                'inputSchema' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'focus_area' => [
+                            'type' => 'string',
+                            'description' => 'Focus on specific area: customer, orders, support, business, all',
+                            'enum' => ['customer', 'orders', 'support', 'business', 'all']
+                        ]
+                    ]
+                ]
+            ]
+        );
+
         $this->log('Registered meta-tools for ' . count($this->discoveredMethods) . ' API methods');
     }
 
@@ -202,15 +227,26 @@ class HostBillMCPServer
     }
 
     /**
-     * List API methods with filtering
+     * List API methods with filtering - Enhanced for agent crew operations
      */
     private function listAPIMethods(array $args): string
     {
         $filter = $args['filter'] ?? '';
         $category = $args['category'] ?? '';
+        $agentMode = $args['agent_mode'] ?? false;
         
         $methods = $this->discoveredMethods;
         
+        // Define agent-focused categories for customer service operations
+        $agentCategories = [
+            'customer' => ['client', 'customer', 'account', 'contact'],
+            'orders' => ['order', 'invoice', 'billing', 'payment', 'product'],
+            'support' => ['ticket', 'support', 'help', 'issue', 'request'],
+            'business' => ['domain', 'hosting', 'service', 'package', 'plan'],
+            'management' => ['admin', 'config', 'setting', 'manage', 'update'],
+            'reports' => ['report', 'stat', 'analytic', 'log', 'audit']
+        ];
+
         if (!empty($filter)) {
             $methods = array_filter($methods, function($method) use ($filter) {
                 return stripos($method, $filter) !== false;
@@ -218,9 +254,23 @@ class HostBillMCPServer
         }
 
         if (!empty($category)) {
-            $methods = array_filter($methods, function($method) use ($category) {
-                return stripos($method, $category) !== false;
-            });
+            if (isset($agentCategories[$category])) {
+                // Agent-focused category filtering
+                $categoryKeywords = $agentCategories[$category];
+                $methods = array_filter($methods, function($method) use ($categoryKeywords) {
+                    foreach ($categoryKeywords as $keyword) {
+                        if (stripos($method, $keyword) !== false) {
+                            return true;
+                        }
+                    }
+                    return false;
+                });
+            } else {
+                // Standard category filtering
+                $methods = array_filter($methods, function($method) use ($category) {
+                    return stripos($method, $category) !== false;
+                });
+            }
         }
 
         $result = [
@@ -229,7 +279,120 @@ class HostBillMCPServer
             'methods' => array_values($methods)
         ];
 
+        // Add agent-focused information when in agent mode
+        if ($agentMode) {
+            $result['agent_categories'] = array_keys($agentCategories);
+            $result['agent_workflow_suggestions'] = $this->getAgentWorkflowSuggestions($methods);
+        }
+
         return json_encode($result, JSON_PRETTY_PRINT);
+    }
+
+    /**
+     * Get agent workflow suggestions based on available methods
+     */
+    private function getAgentWorkflowSuggestions(array $methods): array
+    {
+        $suggestions = [];
+        
+        // Customer service workflows
+        $customerMethods = array_filter($methods, function($method) {
+            return stripos($method, 'client') !== false || stripos($method, 'customer') !== false;
+        });
+        if (!empty($customerMethods)) {
+            $suggestions['customer_service'] = [
+                'description' => 'Customer account management and support',
+                'methods' => array_values($customerMethods),
+                'common_tasks' => ['View customer details', 'Update account information', 'Check service status']
+            ];
+        }
+
+        // Order processing workflows
+        $orderMethods = array_filter($methods, function($method) {
+            return stripos($method, 'order') !== false || stripos($method, 'invoice') !== false || stripos($method, 'payment') !== false;
+        });
+        if (!empty($orderMethods)) {
+            $suggestions['order_processing'] = [
+                'description' => 'Order management and billing operations',
+                'methods' => array_values($orderMethods),
+                'common_tasks' => ['Process new orders', 'Generate invoices', 'Handle payments']
+            ];
+        }
+
+        // Support ticket workflows
+        $supportMethods = array_filter($methods, function($method) {
+            return stripos($method, 'ticket') !== false || stripos($method, 'support') !== false;
+        });
+        if (!empty($supportMethods)) {
+            $suggestions['support_operations'] = [
+                'description' => 'Help desk and ticket management',
+                'methods' => array_values($supportMethods),
+                'common_tasks' => ['Create tickets', 'Update support requests', 'Track issue resolution']
+            ];
+        }
+
+        return $suggestions;
+    }
+
+    /**
+     * Get agent dashboard with quick access to key customer service functions
+     */
+    private function getAgentDashboard(array $args): string
+    {
+        $focusArea = $args['focus_area'] ?? 'all';
+        
+        $dashboard = [
+            'agent_info' => [
+                'server_status' => 'connected',
+                'api_methods_available' => count($this->discoveredMethods),
+                'focus_area' => $focusArea,
+                'timestamp' => date('Y-m-d H:i:s')
+            ]
+        ];
+
+        // Define priority methods for each focus area
+        $priorityMethods = [
+            'customer' => ['getClientDetails', 'getClients', 'updateClient', 'getClientServices'],
+            'orders' => ['getOrders', 'createOrder', 'getInvoices', 'createInvoice', 'getPayments'],
+            'support' => ['getTickets', 'createTicket', 'updateTicket', 'getTicketReplies'],
+            'business' => ['getDomains', 'getProducts', 'getServices', 'getPackages']
+        ];
+
+        if ($focusArea === 'all') {
+            foreach ($priorityMethods as $area => $methods) {
+                $availableMethods = array_intersect($methods, $this->discoveredMethods);
+                if (!empty($availableMethods)) {
+                    $dashboard['quick_access'][$area] = [
+                        'description' => ucfirst($area) . ' operations',
+                        'priority_methods' => array_values($availableMethods),
+                        'total_related' => count(array_filter($this->discoveredMethods, function($method) use ($area) {
+                            return stripos($method, $area) !== false;
+                        }))
+                    ];
+                }
+            }
+        } else {
+            if (isset($priorityMethods[$focusArea])) {
+                $availableMethods = array_intersect($priorityMethods[$focusArea], $this->discoveredMethods);
+                $dashboard['focused_area'] = [
+                    'area' => $focusArea,
+                    'priority_methods' => array_values($availableMethods),
+                    'all_related' => array_filter($this->discoveredMethods, function($method) use ($focusArea) {
+                        return stripos($method, $focusArea) !== false;
+                    })
+                ];
+            }
+        }
+
+        // Add agent tips and best practices
+        $dashboard['agent_tips'] = [
+            'workflow_optimization' => 'Use category filters to quickly find relevant API methods',
+            'customer_service' => 'Start with getClientDetails for customer inquiries',
+            'order_processing' => 'Use createOrder followed by createInvoice for new sales',
+            'support_workflow' => 'Create tickets with createTicket and track with getTickets'
+        ];
+
+        return json_encode($dashboard, JSON_PRETTY_PRINT);
     }
 
     /**
@@ -297,15 +460,16 @@ class HostBillMCPServer
     }
 
     /**
-     * Generate tool schema for API method
+     * Generate tool schema for API method - Enhanced for agent operations
      */
     private function generateToolSchema(string $method): array
     {
         try {
             $details = $this->hostbill->getMethodDetails($method);
+            $agentDescription = $this->getAgentFriendlyDescription($method, $details['description'] ?? '');
             
             return [
-                'description' => $details['description'] ?? "Execute {$method} API call",
+                'description' => $agentDescription,
                 'inputSchema' => [
                     'type' => 'object',
                     'properties' => $this->generateInputProperties($details['parameters'] ?? []),
@@ -313,14 +477,58 @@ class HostBillMCPServer
                 ]
             ];
         } catch (\Exception $e) {
+            $agentDescription = $this->getAgentFriendlyDescription($method);
             return [
-                'description' => "Execute {$method} API call",
+                'description' => $agentDescription,
                 'inputSchema' => [
                     'type' => 'object',
                     'additionalProperties' => true
                 ]
             ];
         }
+    }
+
+    /**
+     * Get agent-friendly description for API methods
+     */
+    private function getAgentFriendlyDescription(string $method, string $originalDescription = ''): string
+    {
+        // Agent-focused descriptions for common HostBill operations
+        $agentDescriptions = [
+            'getClientDetails' => 'Get customer account information and details (Agent: Use for customer inquiries)',
+            'getClients' => 'List all customers (Agent: Customer search and management)',
+            'updateClient' => 'Update customer account information (Agent: Modify customer details)',
+            'getOrders' => 'View customer orders and order history (Agent: Track order status)',
+            'createOrder' => 'Create new order for customer (Agent: Process new sales)',
+            'getInvoices' => 'View customer invoices and billing (Agent: Billing inquiries)',
+            'createInvoice' => 'Generate invoice for customer (Agent: Manual billing)',
+            'getTickets' => 'View support tickets (Agent: Customer support dashboard)',
+            'createTicket' => 'Create new support ticket (Agent: Log customer issues)',
+            'updateTicket' => 'Update support ticket status (Agent: Manage support cases)',
+            'getPayments' => 'View payment history (Agent: Payment inquiries)',
+            'getDomains' => 'List customer domains (Agent: Domain management)',
+            'getServices' => 'View customer services (Agent: Service management)',
+            'getProducts' => 'List available products (Agent: Sales information)'
+        ];
+
+        if (isset($agentDescriptions[$method])) {
+            return $agentDescriptions[$method];
+        }
+
+        // Generate contextual description based on method name
+        $baseDescription = $originalDescription ?: "Execute {$method} API call";
+        
+        if (stripos($method, 'client') !== false || stripos($method, 'customer') !== false) {
+            return $baseDescription . ' (Customer Service Operation)';
+        } elseif (stripos($method, 'order') !== false || stripos($method, 'invoice') !== false) {
+            return $baseDescription . ' (Order Processing Operation)';
+        } elseif (stripos($method, 'ticket') !== false || stripos($method, 'support') !== false) {
+            return $baseDescription . ' (Support Operation)';
+        } elseif (stripos($method, 'domain') !== false || stripos($method, 'service') !== false) {
+            return $baseDescription . ' (Business Operation)';
+        }
+
+        return $baseDescription;
     }
 
     /**

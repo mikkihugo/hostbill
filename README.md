@@ -115,20 +115,36 @@ If API discovery fails, the server provides basic tools:
 ### Individual Mode Tools
 
 When fewer than 50 API methods are available, each method gets its own tool:
-- `hostbill_[method_name]`: Execute specific API methods
+- `hostbill_[method_name]`: Execute specific API methods with agent-friendly descriptions
 
 ### Meta-Tools Mode
 
 When 50+ API methods are available:
 
-- **`hostbill_list_methods`**: List available API methods
-  - Parameters: `filter` (string), `category` (string)
+- **`hostbill_list_methods`**: List available API methods with agent-focused filtering
+  - Parameters: `filter` (string), `category` (string), `agent_mode` (boolean)
+  - Agent categories: `customer`, `orders`, `support`, `business`, `management`, `reports`
+  - When `agent_mode` is true, provides workflow suggestions and enhanced categorization
   
 - **`hostbill_get_method_details`**: Get method information
   - Parameters: `method` (string, required)
   
 - **`hostbill_call_api`**: Execute any API method
   - Parameters: `method` (string, required), `parameters` (object)
+
+- **`hostbill_agent_dashboard`**: Agent-focused dashboard for customer service operations
+  - Parameters: `focus_area` (string: customer, orders, support, business, all)
+  - Provides quick access to priority methods and workflow tips
+
+### Agent-Focused Features
+
+The server now includes enhanced support for agent crews and customer service operations:
+
+- **Smart Categorization**: API methods are automatically categorized for customer service workflows
+- **Agent Mode**: Enhanced filtering and workflow suggestions when `agent_mode=true`
+- **Priority Methods**: Dashboard highlights the most important methods for each operation area
+- **Workflow Suggestions**: Automatic suggestions for common customer service workflows
+- **Agent-Friendly Descriptions**: Tool descriptions include context for customer service operations
 
 ### Fallback Tools
 
@@ -151,6 +167,26 @@ When 50+ API methods are available:
 
 ## Example Interactions
 
+### Agent Dashboard Access
+```
+Agent: "Show me the agent dashboard"
+Assistant: Uses hostbill_agent_dashboard to display customer service quick access panel
+```
+
+### Customer Service Workflow
+```
+Agent: "What customer service methods are available?"
+Assistant: Uses hostbill_list_methods with category="customer" and agent_mode=true
+Result: Shows customer-related methods with workflow suggestions
+```
+
+### Order Processing Operations
+```
+Agent: "I need to process orders, what tools do I have?"
+Assistant: Uses hostbill_agent_dashboard with focus_area="orders"
+Result: Shows priority order processing methods and workflow tips
+```
+
 ### Listing Available Methods
 ```
 User: "What HostBill API methods are available?"
@@ -159,14 +195,23 @@ Assistant: Uses hostbill_list_methods to show all accessible methods
 
 ### Getting Client Information
 ```
-User: "Get information about client ID 123"
+Agent: "Get information about client ID 123"
 Assistant: Uses hostbill_call_api with method="getClientDetails" and parameters={"id": 123}
+Note: Tool description now shows "(Agent: Use for customer inquiries)"
 ```
 
 ### Creating an Invoice
 ```
-User: "Create an invoice for client 456"
+Agent: "Create an invoice for client 456"
 Assistant: Uses hostbill_call_api with method="createInvoice" and appropriate parameters
+Note: Tool description shows "(Agent: Manual billing)"
+```
+
+### Support Ticket Management
+```
+Agent: "Show me support-related tools"
+Assistant: Uses hostbill_list_methods with category="support" and agent_mode=true
+Result: Lists ticket management tools with common tasks and workflow suggestions
 ```
 
 ## Requirements
