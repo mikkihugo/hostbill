@@ -23,3 +23,8 @@
 /app/Config/core.php
 /app/Config/database.php
 /vendors/*
+
+# TypeScript/Node.js
+typescript-server/node_modules/
+typescript-server/dist/
+typescript-server/.env
