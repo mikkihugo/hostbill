@@ -1,0 +1,97 @@
+#!/usr/bin/env php
+<?php
+
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use HostBillMCP\HostBillMCPServer;
+
+// Handle command line arguments first
+if (isset($argv[1])) {
+    switch ($argv[1]) {
+        case '--help':
+        case '-h':
+            echo "HostBill MCP Server\n";
+            echo "Usage: {$argv[0]} [options]\n";
+            echo "Options:\n";
+            echo "  --help, -h     Show this help message\n";
+            echo "  --version, -v  Show version information\n";
+            echo "  --test         Test HostBill API connection\n";
+            echo "\nEnvironment Variables:\n";
+            echo "  HOSTBILL_URL      Your HostBill instance URL\n";
+            echo "  HOSTBILL_API_ID   Your API ID\n";
+            echo "  HOSTBILL_API_KEY  Your API Key\n";
+            exit(0);
+            
+        case '--version':
+        case '-v':
+            echo "HostBill MCP Server v1.0.0\n";
+            exit(0);
+    }
+}
+
+// Configuration
+$config = [
+    'server_name' => 'hostbill-mcp-server',
+    'version' => '1.0.0',
+    'hostbill_url' => $_ENV['HOSTBILL_URL'] ?? 'https://your-hostbill-instance.com',
+    'api_id' => $_ENV['HOSTBILL_API_ID'] ?? '',
+    'api_key' => $_ENV['HOSTBILL_API_KEY'] ?? ''
+];
+
+// Validate configuration
+if (empty($config['hostbill_url']) || empty($config['api_id']) || empty($config['api_key'])) {
+    fprintf(STDERR, "Error: Missing required environment variables:\n");
+    fprintf(STDERR, "- HOSTBILL_URL: Your HostBill instance URL\n");
+    fprintf(STDERR, "- HOSTBILL_API_ID: Your API ID\n");
+    fprintf(STDERR, "- HOSTBILL_API_KEY: Your API Key\n");
+    exit(1);
+}
+
+// Handle remaining command line arguments
+if (isset($argv[1])) {
+    switch ($argv[1]) {
+        case '--test':
+            echo "Testing HostBill API connection...\n";
+            
+            require_once __DIR__ . '/../src/HostBillAPIClient.php';
+            $client = new HostBillMCP\HostBillAPIClient(
+                $config['hostbill_url'],
+                $config['api_id'],
+                $config['api_key']
+            );
+            
+            if ($client->testConnection()) {
+                echo "✓ Connection successful\n";
+                
+                try {
+                    $methods = $client->getAPIMethods();
+                    echo "✓ Discovered " . count($methods) . " API methods\n";
+                    
+                    $info = $client->getServerInfo();
+                    if (isset($info['version'])) {
+                        echo "✓ HostBill version: " . $info['version'] . "\n";
+                    }
+                } catch (Exception $e) {
+                    echo "⚠ Warning: " . $e->getMessage() . "\n";
+                }
+            } else {
+                echo "✗ Connection failed\n";
+                exit(1);
+            }
+            exit(0);
+            
+        default:
+            fprintf(STDERR, "Unknown option: {$argv[1]}\n");
+            fprintf(STDERR, "Use --help for usage information\n");
+            exit(1);
+    }
+}
+
+try {
+    // Create and start the MCP server
+    $server = new HostBillMCPServer($config);
+    $server->start();
+} catch (Exception $e) {
+    fprintf(STDERR, "Error: %s\n", $e->getMessage());
+    exit(1);
+}
