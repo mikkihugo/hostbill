@@ -121,10 +121,11 @@ When fewer than 50 API methods are available, each method gets its own tool:
 
 When 50+ API methods are available:
 
-- **`hostbill_list_methods`**: List available API methods with agent-focused filtering
-  - Parameters: `filter` (string), `category` (string), `agent_mode` (boolean)
-  - Agent categories: `customer`, `orders`, `support`, `business`, `management`, `reports`
-  - When `agent_mode` is true, provides workflow suggestions and enhanced categorization
+- **`hostbill_list_methods`**: List available API methods with role-focused filtering
+  - Parameters: `filter` (string), `category` (string), `role` (string), `agent_mode` (boolean)
+  - Supported roles: `customer_service`, `business_agent`, `product_owner`, `research`
+  - Categories vary by role (see Role Categories section above)
+  - When `agent_mode` is true, provides role-specific workflow suggestions and enhanced categorization
   
 - **`hostbill_get_method_details`**: Get method information
   - Parameters: `method` (string, required)
@@ -132,19 +133,61 @@ When 50+ API methods are available:
 - **`hostbill_call_api`**: Execute any API method
   - Parameters: `method` (string, required), `parameters` (object)
 
-- **`hostbill_agent_dashboard`**: Agent-focused dashboard for customer service operations
-  - Parameters: `focus_area` (string: customer, orders, support, business, all)
-  - Provides quick access to priority methods and workflow tips
+- **`hostbill_agent_dashboard`**: Role-based dashboard for different agent types
+  - Parameters: `role` (string: customer_service, business_agent, product_owner, research), `focus_area` (string: varies by role)
+  - Provides quick access to priority methods and role-specific workflow tips
+  - Supports all agent roles with specialized functionality for each
 
 ### Agent-Focused Features
 
-The server now includes enhanced support for agent crews and customer service operations:
+The server now includes comprehensive support for multiple agent roles and their specific workflows:
 
-- **Smart Categorization**: API methods are automatically categorized for customer service workflows
+#### **🎯 Multi-Role Support**
+- **Customer Service Agents**: Customer inquiries, order processing, support tickets
+- **Business Agents**: Partnership management, sales operations, market analysis  
+- **Product Owners**: Product management, feature development, pricing strategy
+- **Research Analysts**: Data analysis, user behavior, performance metrics
+
+#### **🔧 Role-Specific Tools**
+- **Smart Categorization**: API methods automatically categorized for role-specific workflows
 - **Agent Mode**: Enhanced filtering and workflow suggestions when `agent_mode=true`
-- **Priority Methods**: Dashboard highlights the most important methods for each operation area
-- **Workflow Suggestions**: Automatic suggestions for common customer service workflows
-- **Agent-Friendly Descriptions**: Tool descriptions include context for customer service operations
+- **Role Dashboards**: Specialized dashboards for each agent role with priority methods
+- **Workflow Suggestions**: Automatic suggestions for common role-specific workflows
+- **Contextual Descriptions**: Tool descriptions include role-specific context and usage guidance
+
+#### **📊 Role Categories**
+
+**Customer Service Agent:**
+- Customer: client, customer, account, contact operations
+- Orders: order, invoice, billing, payment, product operations  
+- Support: ticket, support, help, issue, request operations
+- Business: domain, hosting, service, package, plan operations
+- Management: admin, config, setting, manage, update operations
+- Reports: report, stat, analytic, log, audit operations
+
+**Business Agent:**
+- Partnerships: partner, affiliate, reseller, vendor, supplier operations
+- Sales: lead, prospect, sale, conversion, pipeline operations
+- Market: campaign, promo, discount, marketing, segment operations
+- Business: revenue, profit, cost, pricing, commission operations
+- Analytics: report, stat, metric, performance, trend operations
+- Strategy: plan, goal, target, forecast, budget operations
+
+**Product Owner:**
+- Products: product, package, plan, service, feature operations
+- Development: config, setting, template, custom, build operations
+- Roadmap: version, update, release, deploy, migration operations
+- Analytics: usage, adoption, feedback, metric, performance operations
+- Management: category, inventory, pricing, lifecycle, portfolio operations
+- Integration: api, webhook, connector, sync, import operations
+
+**Research Analyst:**
+- Analytics: report, stat, analytic, metric, data operations
+- Research: survey, feedback, review, rating, opinion operations
+- Behavior: usage, activity, session, interaction, event operations
+- Performance: performance, speed, load, response, benchmark operations
+- Insights: trend, pattern, correlation, prediction, forecast operations
+- Monitoring: log, audit, track, monitor, alert operations
 
 ### Fallback Tools
 
@@ -167,51 +210,108 @@ The server now includes enhanced support for agent crews and customer service op
 
 ## Example Interactions
 
-### Agent Dashboard Access
+### Multi-Role Agent Dashboards
+
+#### Customer Service Agent
 ```
-Agent: "Show me the agent dashboard"
-Assistant: Uses hostbill_agent_dashboard to display customer service quick access panel
+Agent: "Show me the customer service dashboard"
+Assistant: Uses hostbill_agent_dashboard with role="customer_service" to display customer service quick access panel
 ```
 
-### Customer Service Workflow
+#### Business Agent Dashboard
 ```
-Agent: "What customer service methods are available?"
-Assistant: Uses hostbill_list_methods with category="customer" and agent_mode=true
-Result: Shows customer-related methods with workflow suggestions
-```
-
-### Order Processing Operations
-```
-Agent: "I need to process orders, what tools do I have?"
-Assistant: Uses hostbill_agent_dashboard with focus_area="orders"
-Result: Shows priority order processing methods and workflow tips
+Business Agent: "Show me business agent tools for partnerships"
+Assistant: Uses hostbill_agent_dashboard with role="business_agent" and focus_area="partnerships"
+Result: Shows partnership management methods, affiliate tools, and business development workflows
 ```
 
-### Listing Available Methods
+#### Product Owner Dashboard
+```
+Product Owner: "I need product management tools"
+Assistant: Uses hostbill_agent_dashboard with role="product_owner" and focus_area="products"
+Result: Shows product catalog management, analytics, and development tools
+```
+
+#### Research Analyst Dashboard
+```
+Research Analyst: "Show me data analysis capabilities"
+Assistant: Uses hostbill_agent_dashboard with role="research" and focus_area="analytics"
+Result: Shows reporting tools, metrics, and behavioral analysis methods
+```
+
+### Role-Specific Method Filtering
+
+#### Business Agent Method Discovery
+```
+Business Agent: "What partnership management methods are available?"
+Assistant: Uses hostbill_list_methods with role="business_agent", category="partnerships", agent_mode=true
+Result: Shows partner-related methods with business development workflow suggestions
+```
+
+#### Product Owner Analytics
+```
+Product Owner: "Show me product analytics tools"
+Assistant: Uses hostbill_list_methods with role="product_owner", category="analytics", agent_mode=true
+Result: Lists product performance and adoption tracking methods with product management workflows
+```
+
+#### Research Data Access
+```
+Research Analyst: "What research and analytics tools do I have?"
+Assistant: Uses hostbill_list_methods with role="research", category="analytics", agent_mode=true
+Result: Shows comprehensive data analysis tools with research methodology suggestions
+```
+
+### Cross-Role Collaboration
+
+#### Multi-Role Project Support
+```
+Team Lead: "Show me all available agent roles and their capabilities"
+Assistant: Uses hostbill_list_methods with agent_mode=true (shows all roles)
+Result: Displays all supported roles, their categories, and workflow suggestions for team coordination
+```
+
+### Standard API Operations
+
+#### Listing Available Methods
 ```
 User: "What HostBill API methods are available?"
 Assistant: Uses hostbill_list_methods to show all accessible methods
 ```
 
-### Getting Client Information
+#### Getting Client Information
 ```
-Agent: "Get information about client ID 123"
+Customer Service Agent: "Get information about client ID 123"
 Assistant: Uses hostbill_call_api with method="getClientDetails" and parameters={"id": 123}
-Note: Tool description now shows "(Agent: Use for customer inquiries)"
+Note: Tool description shows "(Customer Service: Use for customer inquiries)"
 ```
 
-### Creating an Invoice
+#### Creating an Invoice
 ```
-Agent: "Create an invoice for client 456"
+Customer Service Agent: "Create an invoice for client 456"
 Assistant: Uses hostbill_call_api with method="createInvoice" and appropriate parameters
-Note: Tool description shows "(Agent: Manual billing)"
+Note: Tool description shows "(Customer Service: Manual billing)"
 ```
 
-### Support Ticket Management
+#### Business Agent Partnership Management
 ```
-Agent: "Show me support-related tools"
-Assistant: Uses hostbill_list_methods with category="support" and agent_mode=true
-Result: Lists ticket management tools with common tasks and workflow suggestions
+Business Agent: "Get affiliate performance data"
+Assistant: Uses hostbill_call_api with method="getAffiliateStats" and appropriate parameters
+Note: Tool description shows "(Business Agent: Partnership development)"
+```
+
+#### Product Owner Analytics
+```
+Product Owner: "Show me product usage statistics"
+Assistant: Uses hostbill_call_api with method="getProductStats" and appropriate parameters
+Note: Tool description shows "(Product Owner: Product analytics)"
+```
+
+#### Research Data Analysis
+```
+Research Analyst: "Generate user behavior report"
+Assistant: Uses hostbill_call_api with method="getUserActivityReport" and appropriate parameters
+Note: Tool description shows "(Research: Behavioral analysis)"
 ```
 
 ## Requirements
