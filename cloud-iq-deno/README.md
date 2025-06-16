@@ -9,6 +9,8 @@ A comprehensive Crayon Cloud-IQ integration with HostBill for CSP (Cloud Solutio
 - **Order Management**: Web-based order creation and routing to HostBill
 - **Usage Tracking**: Real-time usage monitoring and billing synchronization
 - **Renewal Management**: Automated renewal tracking and sync
+- **Multi-Agent Development Crews**: AI-powered task orchestration with specialized agents
+- **Federated MCP Support**: Integration with Model Context Protocol servers
 - **File-based Database**: SQLite for initial deployment, PostgreSQL migration ready
 - **Docker Support**: Full containerization with Docker Compose
 
@@ -16,8 +18,10 @@ A comprehensive Crayon Cloud-IQ integration with HostBill for CSP (Cloud Solutio
 
 - **Frontend**: Deno Fresh2 with Tailwind CSS
 - **Backend**: TypeScript with Deno runtime
-- **Database**: SQLite (file-based) with PostgreSQL migration path
+- **Database**: JSON-based file storage (SQLite replacement) with PostgreSQL migration path
 - **APIs**: Crayon Cloud-IQ REST API and HostBill API integration
+- **Multi-Agent System**: Specialized agents for sync, orders, analytics, and monitoring
+- **MCP Integration**: Federated Model Context Protocol server support
 - **Deployment**: Docker containers with health checks
 
 ## Quick Start
@@ -46,6 +50,9 @@ A comprehensive Crayon Cloud-IQ integration with HostBill for CSP (Cloud Solutio
    HOSTBILL_URL=https://your-hostbill-instance.com
    HOSTBILL_API_ID=your_hostbill_api_id
    HOSTBILL_API_KEY=your_hostbill_api_key
+   
+   # Enable multi-agent development crews
+   ENABLE_MULTI_AGENT=true
    ```
 
 ### Development
@@ -88,6 +95,69 @@ A comprehensive Crayon Cloud-IQ integration with HostBill for CSP (Cloud Solutio
 ### API Routes
 
 - `POST /api/sync/manual` - Trigger manual synchronization
+- `GET /api/sync/stats` - Get synchronization statistics
+- `GET /api/agents/status` - Get multi-agent crew status
+- `GET /api/agents/tasks` - Get agent tasks (with filtering)
+- `POST /api/agents/tasks` - Create new agent task
+- `POST /api/agents/workflow` - Orchestrate multi-agent workflow
+
+## Multi-Agent Development Crews
+
+The system includes a sophisticated multi-agent architecture with specialized agents:
+
+### Agent Types
+
+1. **SyncAgent** - Data Synchronization Specialist
+   - Handles Crayon-to-HostBill synchronization
+   - Manages billing reconciliation
+   - Monitors data consistency
+
+2. **OrderAgent** - Order Processing Specialist  
+   - Processes CSP orders and approvals
+   - Manages customer workflows
+   - Coordinates order fulfillment
+
+3. **AnalyticsAgent** - Business Intelligence Specialist
+   - Provides usage analysis and insights
+   - Generates cost optimization recommendations
+   - Performs trend forecasting
+
+4. **MonitorAgent** - System Monitoring Specialist
+   - Monitors system health and performance
+   - Manages alerts and notifications
+   - Optimizes system performance
+
+### Task Orchestration
+
+Agents can work individually or in coordinated workflows:
+
+```typescript
+// Create individual task
+const taskId = await multiAgentCrew.createTask({
+  type: 'sync',
+  priority: 'high',
+  payload: { operation: 'full-sync' }
+});
+
+// Orchestrate complex workflow
+const taskIds = await multiAgentCrew.orchestrateWorkflow('order-processing', {
+  customerId: 'customer123',
+  products: ['office365', 'teams']
+});
+```
+
+### Federated MCP Integration
+
+The system supports integration with federated Model Context Protocol servers:
+
+- **HostBill MCP Server**: Direct integration with existing HostBill MCP
+- **Crayon MCP Server**: Conceptual integration for Crayon API
+- **Analytics MCP Server**: Future integration for advanced analytics
+
+Enable multi-agent crews with:
+```bash
+export ENABLE_MULTI_AGENT=true
+```
 
 ## Database Schema
 

@@ -3,9 +3,11 @@
 /**
  * Cloud-IQ Deno Application
  * Standalone HTTP server for Crayon Cloud-IQ and HostBill integration
+ * With multi-agent development crews and federated MCP support
  */
 
 import { CloudIQSyncService } from "./lib/sync.ts";
+import { MultiAgentCrew } from "./lib/multi-agent.ts";
 
 // Configuration from environment variables
 const config = {
@@ -21,6 +23,7 @@ const config = {
     apiKey: Deno.env.get("HOSTBILL_API_KEY") || "",
   },
   syncIntervalMinutes: parseInt(Deno.env.get("SYNC_INTERVAL_MINUTES") || "60"),
+  enableMultiAgent: Deno.env.get("ENABLE_MULTI_AGENT") === "true",
 };
 
 console.log("🚀 Starting Cloud-IQ Deno Application");
@@ -28,6 +31,7 @@ console.log(`📊 Server will run on http://localhost:${config.port}`);
 
 // Initialize sync service for background operations
 let syncService: CloudIQSyncService | null = null;
+let multiAgentCrew: MultiAgentCrew | null = null;
 
 if (config.crayonConfig.clientId && config.hostbillConfig.apiUrl) {
   syncService = new CloudIQSyncService(config);
@@ -35,6 +39,23 @@ if (config.crayonConfig.clientId && config.hostbillConfig.apiUrl) {
   console.log("✅ Background sync service started");
 } else {
   console.log("⚠️  Sync service disabled - missing API configuration");
+}
+
+// Initialize multi-agent crew if enabled
+if (config.enableMultiAgent) {
+  multiAgentCrew = new MultiAgentCrew();
+  console.log("🤖 Multi-agent development crew initialized");
+  
+  // Create initial monitoring task
+  if (multiAgentCrew) {
+    multiAgentCrew.createTask({
+      type: 'analysis',
+      priority: 'medium',
+      payload: { operation: 'system-health-check' },
+    });
+  }
+} else {
+  console.log("⚠️  Multi-agent crew disabled - set ENABLE_MULTI_AGENT=true to enable");
 }
 
 // Simple HTTP server handler
@@ -59,9 +80,20 @@ async function handler(request: Request): Promise<Response> {
     if (pathname.startsWith("/api/")) {
       const headers = { ...corsHeaders, "Content-Type": "application/json" };
 
+      // Sync API endpoints
       if (pathname === "/api/sync/manual" && request.method === "POST") {
         if (syncService) {
           const result = await syncService.performFullSync();
+          
+          // Create agent task for sync analysis if multi-agent is enabled
+          if (multiAgentCrew) {
+            await multiAgentCrew.createTask({
+              type: 'analysis',
+              priority: 'medium',
+              payload: { operation: 'sync-result-analysis', result },
+            });
+          }
+          
           return new Response(JSON.stringify(result), { headers });
         } else {
           return new Response(
@@ -78,6 +110,75 @@ async function handler(request: Request): Promise<Response> {
         } else {
           return new Response(
             JSON.stringify({ error: "Sync service not available" }),
+            { status: 503, headers }
+          );
+        }
+      }
+
+      // Multi-agent API endpoints
+      if (pathname === "/api/agents/status") {
+        if (multiAgentCrew) {
+          const status = multiAgentCrew.getCrewStatus();
+          return new Response(JSON.stringify(status), { headers });
+        } else {
+          return new Response(
+            JSON.stringify({ error: "Multi-agent crew not available" }),
+            { status: 503, headers }
+          );
+        }
+      }
+
+      if (pathname === "/api/agents/tasks" && request.method === "GET") {
+        if (multiAgentCrew) {
+          const filter: any = {};
+          if (searchParams.get("status")) filter.status = searchParams.get("status");
+          if (searchParams.get("type")) filter.type = searchParams.get("type");
+          
+          const tasks = multiAgentCrew.getTasks(filter);
+          return new Response(JSON.stringify(tasks), { headers });
+        } else {
+          return new Response(
+            JSON.stringify({ error: "Multi-agent crew not available" }),
+            { status: 503, headers }
+          );
+        }
+      }
+
+      if (pathname === "/api/agents/tasks" && request.method === "POST") {
+        if (multiAgentCrew) {
+          try {
+            const body = await request.json();
+            const taskId = await multiAgentCrew.createTask(body);
+            return new Response(JSON.stringify({ taskId }), { headers });
+          } catch (error) {
+            return new Response(
+              JSON.stringify({ error: "Invalid task payload" }),
+              { status: 400, headers }
+            );
+          }
+        } else {
+          return new Response(
+            JSON.stringify({ error: "Multi-agent crew not available" }),
+            { status: 503, headers }
+          );
+        }
+      }
+
+      if (pathname === "/api/agents/workflow" && request.method === "POST") {
+        if (multiAgentCrew) {
+          try {
+            const body = await request.json();
+            const taskIds = await multiAgentCrew.orchestrateWorkflow(body.workflowType, body.payload);
+            return new Response(JSON.stringify({ taskIds }), { headers });
+          } catch (error) {
+            return new Response(
+              JSON.stringify({ error: "Invalid workflow request" }),
+              { status: 400, headers }
+            );
+          }
+        } else {
+          return new Response(
+            JSON.stringify({ error: "Multi-agent crew not available" }),
             { status: 503, headers }
           );
         }
@@ -239,6 +340,80 @@ function serveStaticPage(pathname: string): Response {
         // Load stats on dashboard page
         if (window.location.pathname === '/') {
             loadStats();
+            loadAgentStatus();
+        }
+
+        async function loadAgentStatus() {
+            try {
+                const response = await fetch('/api/agents/status');
+                if (response.ok) {
+                    const agentStatus = await response.json();
+                    
+                    const agentElement = document.getElementById('agent-status');
+                    if (agentElement && agentStatus.agents) {
+                        agentElement.innerHTML = \`
+                            <div class="bg-white shadow rounded-lg p-6">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4">Multi-Agent Crew Status</h3>
+                                <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                                    <div class="text-center">
+                                        <div class="text-2xl font-bold text-blue-600">\${agentStatus.agents.total}</div>
+                                        <div class="text-sm text-gray-500">Agents</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-2xl font-bold text-green-600">\${agentStatus.tasks.total || 0}</div>
+                                        <div class="text-sm text-gray-500">Tasks</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-2xl font-bold text-purple-600">\${agentStatus.mcpServers.active}</div>
+                                        <div class="text-sm text-gray-500">MCP Servers</div>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <button onclick="createSampleTask()" class="text-sm bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
+                                        Create Sample Task
+                                    </button>
+                                </div>
+                            </div>
+                        \`;
+                    }
+                } else {
+                    const agentElement = document.getElementById('agent-status');
+                    if (agentElement) {
+                        agentElement.innerHTML = \`
+                            <div class="bg-gray-100 shadow rounded-lg p-6">
+                                <h3 class="text-lg font-semibold text-gray-700 mb-2">Multi-Agent Crew</h3>
+                                <p class="text-sm text-gray-600">Multi-agent crew is disabled. Set ENABLE_MULTI_AGENT=true to enable.</p>
+                            </div>
+                        \`;
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load agent status:', error);
+            }
+        }
+
+        async function createSampleTask() {
+            try {
+                const response = await fetch('/api/agents/tasks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: 'analysis',
+                        priority: 'medium',
+                        payload: { operation: 'sample-analysis', source: 'dashboard' }
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.taskId) {
+                    alert(\`Created task: \${result.taskId}\`);
+                    loadAgentStatus(); // Reload status
+                } else {
+                    alert('Failed to create task');
+                }
+            } catch (error) {
+                alert('Error creating task: ' + error.message);
+            }
         }
     </script>
 </body>
@@ -262,6 +437,10 @@ function getPageContent(pathname: string): string {
                 
                 <div id="sync-stats" class="mb-8">
                     <div class="animate-pulse">Loading statistics...</div>
+                </div>
+
+                <div id="agent-status" class="mb-8">
+                    <div class="animate-pulse">Loading agent status...</div>
                 </div>
 
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
