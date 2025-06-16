@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  cloud-iq:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - CRAYON_CLIENT_ID=${CRAYON_CLIENT_ID}
+      - CRAYON_CLIENT_SECRET=${CRAYON_CLIENT_SECRET}
+      - CRAYON_TENANT_ID=${CRAYON_TENANT_ID}
+      - HOSTBILL_URL=${HOSTBILL_URL}
+      - HOSTBILL_API_ID=${HOSTBILL_API_ID}
+      - HOSTBILL_API_KEY=${HOSTBILL_API_KEY}
+      - DATABASE_PATH=/app/data/cloudiq.db
+      - SYNC_INTERVAL_MINUTES=60
+      - PORT=8000
+    volumes:
+      - cloud_iq_data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # PostgreSQL for future migration from SQLite
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=cloudiq
+      - POSTGRES_USER=cloudiq
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-defaultpassword}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+
+volumes:
+  cloud_iq_data:
+  postgres_data:

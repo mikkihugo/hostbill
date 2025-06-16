@@ -1,0 +1,28 @@
+# Database files
+data/
+*.db
+*.sqlite
+
+# Environment files
+.env
+
+# Deno cache
+.deno/
+
+# Fresh build files
+_fresh/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+tmp/
+temp/
