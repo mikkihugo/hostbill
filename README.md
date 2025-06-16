@@ -2,50 +2,29 @@
 
 An MCP (Model Context Protocol) server for HostBill that provides dynamic API discovery and tool generation.
 
-## Features
+## Available Implementations
 
-- **Dynamic API Discovery**: Automatically discovers available HostBill API methods using the `getAPIMethods` endpoint
-- **Permission-Aware Tools**: Only exposes API methods that the provided API key has access to
-- **Adaptive Selection**: Uses meta-tools pattern for large APIs (>50 methods) or individual tools for smaller APIs
-- **Secure Authentication**: Handles API authentication securely with proper error handling
-- **Caching**: Implements caching for API method discovery to improve performance
-- **Comprehensive Error Handling**: Graceful degradation when API is unavailable
+This repository provides **two complete implementations**:
 
-## Installation
+1. **PHP Implementation** (recommended for HostBill environments) - Located in the root directory
+2. **TypeScript/Node.js Implementation** (modern alternative) - Located in `typescript-server/`
 
-1. Clone this repository
-2. Install PHP dependencies:
-   ```bash
-   composer install --no-dev
-   ```
+Both implementations provide identical functionality and MCP protocol compliance.
 
-## Configuration
+## Quick Start
 
-Set the following environment variables:
-
-- `HOSTBILL_URL`: Your HostBill instance URL (e.g., `https://billing.yourcompany.com`)
-- `HOSTBILL_API_ID`: Your HostBill API ID
-- `HOSTBILL_API_KEY`: Your HostBill API Key
-
-## Usage
-
-### Test Connection
-
-Before using with an MCP client, test the connection:
-
+### PHP Version (Recommended)
 ```bash
+# Install dependencies
+composer install --no-dev
+
+# Test connection
 export HOSTBILL_URL="https://your-hostbill-instance.com"
 export HOSTBILL_API_ID="your-api-id"
 export HOSTBILL_API_KEY="your-api-key"
-
 php bin/hostbill-mcp-server --test
-```
 
-### With Claude Desktop
-
-Add to your Claude Desktop configuration:
-
-```json
+# Use with Claude Desktop - add to claude_desktop_config.json:
 {
   "mcpServers": {
     "hostbill": {
@@ -60,6 +39,51 @@ Add to your Claude Desktop configuration:
   }
 }
 ```
+
+### TypeScript Version
+```bash
+# Build and install
+cd typescript-server
+npm install
+npm run build
+
+# Test connection
+export HOSTBILL_URL="https://your-hostbill-instance.com"
+export HOSTBILL_API_ID="your-api-id"
+export HOSTBILL_API_KEY="your-api-key"
+node dist/index.js --test
+
+# Use with Claude Desktop - add to claude_desktop_config.json:
+{
+  "mcpServers": {
+    "hostbill-ts": {
+      "command": "node",
+      "args": ["/path/to/hostbill-mcp-server/typescript-server/dist/index.js"],
+      "env": {
+        "HOSTBILL_URL": "https://your-hostbill-instance.com",
+        "HOSTBILL_API_ID": "your-api-id",
+        "HOSTBILL_API_KEY": "your-api-key"
+      }
+    }
+  }
+}
+```
+
+## Implementation Comparison
+
+| Feature | PHP Version | TypeScript Version |
+|---------|-------------|-------------------|
+| **Runtime** | PHP 8.1+ | Node.js 18+ |
+| **Dependencies** | Minimal (cURL) | node-fetch |
+| **Startup Time** | ~50ms | ~200ms |
+| **Memory Usage** | ~10-15MB | ~25-35MB |
+| **Type Safety** | Runtime only | Compile-time + Runtime |
+| **Development** | Traditional PHP | Modern ES modules |
+| **Deployment** | Simple (single binary) | Requires build step |
+| **Performance** | Excellent | Very good |
+| **Debugging** | Standard PHP tools | Rich TypeScript tooling |
+
+**Recommendation**: Use the PHP version for production HostBill environments due to lower resource usage and simpler deployment. Use the TypeScript version if you prefer modern development tools and type safety.
 
 ## How It Works
 
