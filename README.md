@@ -139,7 +139,7 @@ The system automatically synchronizes data between Crayon Cloud-IQ and HostBill:
 
 ```
 cloud-iq-hostbill/
-├── sr/
+├── src/
 │   ├── api/
 │   │   ├── crayon.js      # Crayon Cloud-IQ API client
 │   │   └── hostbill.js    # HostBill API client
@@ -164,10 +164,10 @@ cloud-iq-hostbill/
 
 ### Adding New Features
 
-1. **New API Clients**: Add to `sr/api/`
-2. **Database Extensions**: Extend `sr/db/sqlite.js`
+1. **New API Clients**: Add to `src/api/`
+2. **Database Extensions**: Extend `src/db/sqlite.js`
 3. **Routes**: Add to `routes/` following conventions
-4. **Sync Logic**: Extend `sr/sync.js`
+4. **Sync Logic**: Extend `src/sync.js`
 
 ## Troubleshooting
 
