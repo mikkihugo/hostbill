@@ -123,19 +123,6 @@ The TypeScript implementation provides:
 - HostBill instance with API access
 - Valid HostBill API credentials
 
-## Comparison with PHP Version
-
-| Feature | PHP Version | TypeScript Version |
-|---------|-------------|-------------------|
-| Runtime | PHP 8.1+ | Node.js 18+ |
-| Dependencies | Minimal (cURL) | node-fetch |
-| Type Safety | Runtime only | Compile-time + Runtime |
-| Performance | Fast startup | Fast execution |
-| Memory Usage | Lower | Higher (V8 overhead) |
-| Development | Traditional | Modern tooling |
-
-Both implementations provide identical MCP functionality and API compatibility.
-
 ## License
 
 MIT License - see LICENSE file for details
