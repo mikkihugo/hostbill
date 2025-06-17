@@ -6,38 +6,32 @@ An MCP (Model Context Protocol) server for HostBill that provides dynamic API di
 
 This repository provides **two complete implementations**:
 
-1. **PHP Implementation** (recommended for HostBill environments) - Located in the root directory
-2. **TypeScript/Node.js Implementation** (modern alternative) - Located in `typescript-server/`
+1. **Deno Implementation** (recommended) - Located in `cloud-iq-deno/` - Modern runtime with TypeScript support
+2. **TypeScript/Node.js Implementation** (alternative) - Located in `typescript-server/` - Traditional Node.js approach
 
-Both implementations provide identical functionality and MCP protocol compliance.
+Both implementations provide comprehensive HostBill integration and MCP protocol compliance.
 
 ## Quick Start
 
-### PHP Version (Recommended)
+### Deno Version (Recommended)
 ```bash
-# Install dependencies
-composer install --no-dev
+# Navigate to Deno implementation
+cd cloud-iq-deno
 
-# Test connection
+# Set environment variables
 export HOSTBILL_URL="https://your-hostbill-instance.com"
 export HOSTBILL_API_ID="your-api-id"
 export HOSTBILL_API_KEY="your-api-key"
-php bin/hostbill-mcp-server --test
+export CRAYON_CLIENT_ID="your-crayon-client-id"
+export CRAYON_CLIENT_SECRET="your-crayon-client-secret"
+export CRAYON_TENANT_ID="your-crayon-tenant-id"
 
-# Use with Claude Desktop - add to claude_desktop_config.json:
-{
-  "mcpServers": {
-    "hostbill": {
-      "command": "php",
-      "args": ["/path/to/hostbill-mcp-server/bin/hostbill-mcp-server"],
-      "env": {
-        "HOSTBILL_URL": "https://your-hostbill-instance.com",
-        "HOSTBILL_API_ID": "your-api-id",
-        "HOSTBILL_API_KEY": "your-api-key"
-      }
-    }
-  }
-}
+# Run the application
+deno run -A --env main.ts
+
+# Or use Docker
+docker build -t hostbill-cloud-iq .
+docker run -p 8000:8000 --env-file .env hostbill-cloud-iq
 ```
 
 ### TypeScript Version
@@ -71,19 +65,19 @@ node dist/index.js --test
 
 ## Implementation Comparison
 
-| Feature | PHP Version | TypeScript Version |
+| Feature | Deno Version | TypeScript Version |
 |---------|-------------|-------------------|
-| **Runtime** | PHP 8.1+ | Node.js 18+ |
-| **Dependencies** | Minimal (cURL) | node-fetch |
-| **Startup Time** | ~50ms | ~200ms |
-| **Memory Usage** | ~10-15MB | ~25-35MB |
-| **Type Safety** | Runtime only | Compile-time + Runtime |
-| **Development** | Traditional PHP | Modern ES modules |
-| **Deployment** | Simple (single binary) | Requires build step |
+| **Runtime** | Deno 1.48+ | Node.js 18+ |
+| **Dependencies** | Zero external deps | node-fetch |
+| **Startup Time** | ~100ms | ~200ms |
+| **Memory Usage** | ~15-25MB | ~25-35MB |
+| **Type Safety** | Built-in TypeScript | Compile-time + Runtime |
+| **Development** | Modern Deno ecosystem | Traditional Node.js |
+| **Deployment** | Single binary | Requires build step |
 | **Performance** | Excellent | Very good |
-| **Debugging** | Standard PHP tools | Rich TypeScript tooling |
+| **Security** | Secure by default | Standard Node.js |
 
-**Recommendation**: Use the PHP version for production HostBill environments due to lower resource usage and simpler deployment. Use the TypeScript version if you prefer modern development tools and type safety.
+**Recommendation**: Use the Deno version for modern development with built-in TypeScript support and enhanced security. Use the TypeScript/Node.js version if you prefer traditional Node.js tooling.
 
 ## How It Works
 
@@ -316,10 +310,11 @@ Note: Tool description shows "(Research: Behavioral analysis)"
 
 ## Requirements
 
-- PHP 8.1 or higher
-- cURL extension
+- Deno 1.48 or higher (for Deno implementation)
+- Node.js 18+ (for TypeScript implementation)
 - HostBill instance with API access
 - Valid HostBill API credentials
+- Optional: Crayon Cloud-IQ API credentials for CSP integration
 
 ## Troubleshooting
 
@@ -327,16 +322,17 @@ Note: Tool description shows "(Research: Behavioral analysis)"
 1. Verify HostBill URL is correct and accessible
 2. Check API credentials are valid
 3. Ensure HostBill API is enabled
-4. Test with `--test` flag for detailed diagnostics
+4. For Deno: Check that all required environment variables are set
+5. For TypeScript: Test with build and connection validation
 
 ### Permission Issues
 - Verify API key has necessary permissions in HostBill admin
 - Check that API access is enabled for your user role
 
 ### Performance Issues
-- Consider using meta-tools mode for large API sets
-- Monitor cache hit rates in logs
-- Increase cache timeout if needed
+- Monitor application performance through browser console
+- Consider enabling multi-agent mode for enhanced functionality
+- Increase sync timeout if needed for large datasets
 
 ## License
 
