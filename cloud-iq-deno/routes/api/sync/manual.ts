@@ -52,10 +52,10 @@ export const handler: Handlers = {
       return new Response(
         JSON.stringify({
           success: false,
-          message: `Manual sync failed: ${error instanceof Error ? error.message : String(error)}`,
+          message: "Manual sync failed due to an internal error.",
           syncedCount: 0,
           errorCount: 1,
-          errors: [error instanceof Error ? error.message : String(error)],
+          errors: ["An internal error occurred. Please contact support if the issue persists."],
           timestamp: new Date().toISOString(),
         }),
         {
