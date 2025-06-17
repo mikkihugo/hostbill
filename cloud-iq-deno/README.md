@@ -28,7 +28,7 @@ A comprehensive Crayon Cloud-IQ integration with HostBill for CSP (Cloud Solutio
 
 ### Prerequisites
 
-- Deno 1.40+ installed
+- Deno 2.3+ installed
 - Crayon Cloud-IQ API credentials
 - HostBill instance with API access
 
