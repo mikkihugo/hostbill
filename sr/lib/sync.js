@@ -2,41 +2,14 @@
  * Sync service for managing billing synchronization between Crayon Cloud-IQ and HostBill
  */
 
-import { CrayonCloudIQClient } from './api/crayon.ts';
-import { HostBillAPIClient } from './api/hostbill.ts';
-import { CloudIQDB, SyncRecord, UsageRecord, OrderRecord } from './db/sqlite.ts';
+import { CrayonCloudIQClient } from './api/crayon.js';
+import { HostBillAPIClient } from './api/hostbill.js';
+import { CloudIQDB } from './db/sqlite.js';
 
-export interface SyncConfig {
-  crayonConfig: {
-    clientId: string;
-    clientSecret: string;
-    tenantId: string;
-  };
-  hostbillConfig: {
-    apiUrl: string;
-    apiId: string;
-    apiKey: string;
-  };
-  dbPath?: string;
-  syncIntervalMinutes?: number;
-}
-
-export interface SyncResult {
-  success: boolean;
-  message: string;
-  syncedCount: number;
-  errorCount: number;
-  errors: string[];
-}
+// Configuration for sync service
 
 export class CloudIQSyncService {
-  private crayonClient: CrayonCloudIQClient;
-  private hostbillClient: HostBillAPIClient;
-  private db: CloudIQDB;
-  private config: SyncConfig;
-  private syncInterval?: number;
-
-  constructor(config: SyncConfig) {
+  constructor(config) {
     this.config = config;
     this.crayonClient = new CrayonCloudIQClient(config.crayonConfig);
     this.hostbillClient = new HostBillAPIClient(config.hostbillConfig);
@@ -46,7 +19,7 @@ export class CloudIQSyncService {
   /**
    * Start periodic sync process
    */
-  startPeriodicSync(): void {
+  startPeriodicSync() {
     const intervalMinutes = this.config.syncIntervalMinutes || 60; // Default 1 hour
     
     console.log(`Starting periodic sync every ${intervalMinutes} minutes`);
@@ -66,7 +39,7 @@ export class CloudIQSyncService {
   /**
    * Stop periodic sync
    */
-  stopPeriodicSync(): void {
+  stopPeriodicSync() {
     if (this.syncInterval) {
       clearInterval(this.syncInterval);
       this.syncInterval = undefined;
@@ -77,7 +50,7 @@ export class CloudIQSyncService {
   /**
    * Perform full synchronization
    */
-  async performFullSync(): Promise<SyncResult> {
+  async performFullSync() {
     console.log('Starting full synchronization...');
     
     const result: SyncResult = {
@@ -129,7 +102,7 @@ export class CloudIQSyncService {
   /**
    * Test Crayon API connection
    */
-  private async testCrayonConnection(): Promise<boolean> {
+  async testCrayonConnection() {
     try {
       await this.crayonClient.authenticate();
       return true;
@@ -141,7 +114,7 @@ export class CloudIQSyncService {
   /**
    * Sync active subscriptions from Crayon to HostBill
    */
-  private async syncActiveSubscriptions(result: SyncResult): Promise<void> {
+  async syncActiveSubscriptions(result: SyncResult) {
     try {
       const subscriptions = await this.crayonClient.getActiveSubscriptions();
       console.log(`Found ${subscriptions.length} active subscriptions in Crayon`);
@@ -150,7 +123,7 @@ export class CloudIQSyncService {
         try {
           // Check if product exists in HostBill
           const products = await this.hostbillClient.getProducts();
-          let hostbillProduct = products.find((p: any) => 
+          let hostbillProduct = products.find((p) => 
             p.name.toLowerCase().includes(subscription.productName.toLowerCase()) ||
             p.name.includes(subscription.subscriptionId)
           );
@@ -217,7 +190,7 @@ export class CloudIQSyncService {
   /**
    * Sync usage data and create invoices in HostBill
    */
-  private async syncUsageData(result: SyncResult): Promise<void> {
+  async syncUsageData(result: SyncResult) {
     try {
       const syncRecords = this.db.getSyncRecords('synced');
       console.log(`Processing usage data for ${syncRecords.length} synced subscriptions`);
@@ -249,12 +222,12 @@ export class CloudIQSyncService {
             
             if (unsyncedUsage.length > 0) {
               // Calculate total cost
-              const totalCost = unsyncedUsage.reduce((sum: number, usage: any) => sum + usage.cost, 0);
+              const totalCost = unsyncedUsage.reduce((sum, usage) => sum + usage.cost, 0);
               
               if (totalCost > 0) {
                 // Find client for this service
                 const services = await this.hostbillClient.getClientServices(''); // This needs proper client lookup
-                const service = services.find((s: any) => s.id === syncRecord.hostbill_service_id);
+                const service = services.find((s) => s.id === syncRecord.hostbill_service_id);
                 
                 if (service) {
                   // Create invoice in HostBill
@@ -268,7 +241,7 @@ export class CloudIQSyncService {
                   });
 
                   // Mark usage records as synced
-                  this.db.markUsageSynced(unsyncedUsage.map((u: any) => u.id!));
+                  this.db.markUsageSynced(unsyncedUsage.map((u) => u.id!));
                   
                   result.syncedCount++;
                   console.log(`Created invoice ${invoiceId} for usage charges: $${totalCost}`);
@@ -294,7 +267,7 @@ export class CloudIQSyncService {
   /**
    * Sync pending orders between systems
    */
-  private async syncPendingOrders(result: SyncResult): Promise<void> {
+  async syncPendingOrders(result: SyncResult) {
     try {
       const pendingOrders = this.db.getOrderRecords('pending');
       console.log(`Processing ${pendingOrders.length} pending orders`);
@@ -340,7 +313,7 @@ export class CloudIQSyncService {
   /**
    * Process upcoming renewals
    */
-  private async processUpcomingRenewals(result: SyncResult): Promise<void> {
+  async processUpcomingRenewals(result: SyncResult) {
     try {
       const upcomingRenewals = await this.crayonClient.getUpcomingRenewals(30);
       console.log(`Processing ${upcomingRenewals.length} upcoming renewals`);
@@ -349,7 +322,7 @@ export class CloudIQSyncService {
         try {
           // Find corresponding HostBill service
           const syncRecord = this.db.getSyncRecords().find(
-            (r: any) => r.crayon_subscription_id === renewal.subscriptionId
+            (r) => r.crayon_subscription_id === renewal.subscriptionId
           );
 
           if (syncRecord) {
@@ -378,11 +351,11 @@ export class CloudIQSyncService {
    * Create new order and sync to both systems
    */
   async createOrder(orderData: {
-    customerId: string;
-    productId: string;
-    quantity: number;
-    billingCycle: string;
-  }): Promise<{ crayonOrderId: string; hostbillOrderId?: string }> {
+    customerId;
+    productId;
+    quantity;
+    billingCycle;
+  }) {
     try {
       // Create order in Crayon
       const crayonOrder = await this.crayonClient.createOrder(
@@ -395,7 +368,7 @@ export class CloudIQSyncService {
         crayon_order_id: crayonOrder.orderId,
         customer_id: orderData.customerId,
         status: 'pending',
-        total_amount: crayonOrder.subscriptions.reduce((sum: number, sub: any) => sum + (sub.quantity * sub.unitPrice), 0),
+        total_amount: crayonOrder.subscriptions.reduce((sum, sub) => sum + (sub.quantity * sub.unitPrice), 0),
         order_data: JSON.stringify(orderData),
       });
 
@@ -415,7 +388,7 @@ export class CloudIQSyncService {
     const dbStats = this.db.getStats();
     const syncRecords = this.db.getSyncRecords();
     
-    const statusCounts = syncRecords.reduce((counts: any, record: any) => {
+    const statusCounts = syncRecords.reduce((counts, record) => {
       counts[record.sync_status] = (counts[record.sync_status] || 0) + 1;
       return counts;
     }, {} as Record<string, number>);
@@ -430,7 +403,7 @@ export class CloudIQSyncService {
   /**
    * Cleanup resources
    */
-  cleanup(): void {
+  cleanup() {
     this.stopPeriodicSync();
     this.db.close();
   }

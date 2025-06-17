@@ -4,44 +4,14 @@
  * API Documentation: https://dev.hostbillapp.com/
  */
 
-export interface HostBillConfig {
-  apiUrl: string;
-  apiId: string;
-  apiKey: string;
-}
 
-export interface HostBillProduct {
-  id: string;
-  name: string;
-  price: number;
-  billingCycle: string;
-  status: 'active' | 'inactive';
-  category: string;
-}
 
-export interface HostBillService {
-  id: string;
-  clientId: string;
-  productId: string;
-  domain: string;
-  status: 'active' | 'suspended' | 'cancelled';
-  nextDueDate: string;
-  recurringAmount: number;
-}
 
-export interface HostBillInvoice {
-  id: string;
-  clientId: string;
-  total: number;
-  status: 'paid' | 'unpaid' | 'cancelled';
-  dateCreated: string;
-  dateDue: string;
-}
 
 export class HostBillAPIClient {
-  private config: HostBillConfig;
-  private cache = new Map<string, { data: any; timestamp: number }>();
-  private cacheTimeout = 300000; // 5 minutes
+  config: HostBillConfig;
+  cache = new Map<string, { data; timestamp }>();
+  cacheTimeout = 300000; // 5 minutes
 
   constructor(config: HostBillConfig) {
     this.config = {
@@ -53,7 +23,7 @@ export class HostBillAPIClient {
   /**
    * Make API request to HostBill
    */
-  private async makeRequest(call: string, args: Record<string, any> = {}): Promise<any> {
+  async makeRequest(call, args: Record<string, any> = {}) {
     const postData = new URLSearchParams({
       call,
       api_id: this.config.apiId,
@@ -91,7 +61,7 @@ export class HostBillAPIClient {
   /**
    * Test API connection
    */
-  async testConnection(): Promise<boolean> {
+  async testConnection() {
     try {
       await this.makeRequest('getServerInfo');
       return true;
@@ -103,7 +73,7 @@ export class HostBillAPIClient {
   /**
    * Get all products for Cloud-IQ CSP services
    */
-  async getProducts(): Promise<HostBillProduct[]> {
+  async getProducts() {
     const cacheKey = 'products';
     const cached = this.cache.get(cacheKey);
     
@@ -113,7 +83,7 @@ export class HostBillAPIClient {
 
     try {
       const response = await this.makeRequest('getProducts');
-      const products = response.products?.map((product: any) => ({
+      const products = response.products?.map((product) => ({
         id: product.id,
         name: product.name,
         price: parseFloat(product.price) || 0,
@@ -134,12 +104,12 @@ export class HostBillAPIClient {
    * Create a new product for CSP service
    */
   async createProduct(productData: {
-    name: string;
-    price: number;
-    billingCycle: string;
-    description?: string;
-    category?: string;
-  }): Promise<string> {
+    name;
+    price;
+    billingCycle;
+    description?;
+    category?;
+  }) {
     const response = await this.makeRequest('addProduct', {
       name: productData.name,
       price: productData.price.toString(),
@@ -155,7 +125,7 @@ export class HostBillAPIClient {
   /**
    * Update product pricing
    */
-  async updateProductPrice(productId: string, newPrice: number): Promise<void> {
+  async updateProductPrice(productId, newPrice) {
     await this.makeRequest('updateProduct', {
       id: productId,
       price: newPrice.toString(),
@@ -165,10 +135,10 @@ export class HostBillAPIClient {
   /**
    * Get client services
    */
-  async getClientServices(clientId: string): Promise<HostBillService[]> {
+  async getClientServices(clientId) {
     const response = await this.makeRequest('getClientServices', { client_id: clientId });
     
-    return response.services?.map((service: any) => ({
+    return response.services?.map((service) => ({
       id: service.id,
       clientId: service.client_id,
       productId: service.product_id,
@@ -183,12 +153,12 @@ export class HostBillAPIClient {
    * Create new service order
    */
   async createServiceOrder(orderData: {
-    clientId: string;
-    productId: string;
-    billingCycle: string;
-    quantity?: number;
+    clientId;
+    productId;
+    billingCycle;
+    quantity?;
     customFields?: Record<string, any>;
-  }): Promise<string> {
+  }) {
     const response = await this.makeRequest('addOrder', {
       client_id: orderData.clientId,
       product_id: orderData.productId,
@@ -203,7 +173,7 @@ export class HostBillAPIClient {
   /**
    * Update service status
    */
-  async updateServiceStatus(serviceId: string, status: 'active' | 'suspended' | 'cancelled'): Promise<void> {
+  async updateServiceStatus(serviceId, status: 'active' | 'suspended' | 'cancelled') {
     await this.makeRequest('changeServiceStatus', {
       service_id: serviceId,
       status,
@@ -214,14 +184,14 @@ export class HostBillAPIClient {
    * Create invoice for billing sync
    */
   async createInvoice(invoiceData: {
-    clientId: string;
+    clientId;
     items: Array<{
-      description: string;
-      amount: number;
-      quantity?: number;
+      description;
+      amount;
+      quantity?;
     }>;
-    dueDate?: string;
-  }): Promise<string> {
+    dueDate?;
+  }) {
     const response = await this.makeRequest('addInvoice', {
       client_id: invoiceData.clientId,
       due_date: invoiceData.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -238,7 +208,7 @@ export class HostBillAPIClient {
   /**
    * Get invoice details
    */
-  async getInvoice(invoiceId: string): Promise<HostBillInvoice | null> {
+  async getInvoice(invoiceId) {
     try {
       const response = await this.makeRequest('getInvoice', { invoice_id: invoiceId });
       
@@ -261,7 +231,7 @@ export class HostBillAPIClient {
   /**
    * Get client information
    */
-  async getClient(clientId: string): Promise<any> {
+  async getClient(clientId) {
     const response = await this.makeRequest('getClientDetails', { client_id: clientId });
     return response.client;
   }
@@ -269,7 +239,7 @@ export class HostBillAPIClient {
   /**
    * Search for clients
    */
-  async searchClients(query: string): Promise<any[]> {
+  async searchClients(query) {
     const response = await this.makeRequest('getClients', { search: query });
     return response.clients || [];
   }
@@ -277,14 +247,14 @@ export class HostBillAPIClient {
   /**
    * Get server information
    */
-  async getServerInfo(): Promise<any> {
+  async getServerInfo() {
     return await this.makeRequest('getServerInfo');
   }
 
   /**
    * Clear cache
    */
-  clearCache(): void {
+  clearCache() {
     this.cache.clear();
   }
 }

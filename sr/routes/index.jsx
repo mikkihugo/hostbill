@@ -5,11 +5,6 @@
 import { type Handlers, type PageProps } from "$fresh/server.ts";
 import { CloudIQSyncService } from "../lib/sync.ts";
 
-interface DashboardData {
-  stats: Record<string, any>;
-  recentSyncs: any[];
-  error?: string;
-}
 
 // Configuration from environment variables
 const config = {

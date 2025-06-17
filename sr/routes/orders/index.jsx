@@ -6,19 +6,7 @@ import { type Handlers, type PageProps } from "$fresh/server.ts";
 import { CloudIQSyncService } from "../../lib/sync.ts";
 import { CrayonCloudIQClient } from "../../lib/api/crayon.ts";
 
-interface OrderPageData {
-  products: any[];
-  customers: any[];
-  error?: string;
-  success?: string;
-}
 
-interface OrderFormData {
-  customerId: string;
-  productId: string;
-  quantity: number;
-  billingCycle: string;
-}
 
 // Configuration from environment variables
 const config = {

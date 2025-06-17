@@ -6,8 +6,7 @@
  * With multi-agent development crews and federated MCP support
  */
 
-import { CloudIQSyncService } from "./lib/sync.ts";
-import { MultiAgentCrew } from "./lib/multi-agent.ts";
+import { CloudIQSyncService } from "./lib/sync.js";
 
 // Configuration from environment variables
 const config = {
@@ -16,6 +15,8 @@ const config = {
     clientId: Deno.env.get("CRAYON_CLIENT_ID") || "",
     clientSecret: Deno.env.get("CRAYON_CLIENT_SECRET") || "",
     tenantId: Deno.env.get("CRAYON_TENANT_ID") || "",
+    dynamicAuth: Deno.env.get("CRAYON_DYNAMIC_AUTH") === "true",
+    username: Deno.env.get("CRAYON_USERNAME") || "",
   },
   hostbillConfig: {
     apiUrl: Deno.env.get("HOSTBILL_URL") || "",
@@ -23,15 +24,13 @@ const config = {
     apiKey: Deno.env.get("HOSTBILL_API_KEY") || "",
   },
   syncIntervalMinutes: parseInt(Deno.env.get("SYNC_INTERVAL_MINUTES") || "60"),
-  enableMultiAgent: Deno.env.get("ENABLE_MULTI_AGENT") === "true",
 };
 
-console.log("🚀 Starting Cloud-IQ Deno Application");
+console.log("🚀 Starting Cloud-IQ Application");
 console.log(`📊 Server will run on http://localhost:${config.port}`);
 
 // Initialize sync service for background operations
-let syncService: CloudIQSyncService | null = null;
-let multiAgentCrew: MultiAgentCrew | null = null;
+let syncService = null;
 
 if (config.crayonConfig.clientId && config.hostbillConfig.apiUrl) {
   syncService = new CloudIQSyncService(config);
@@ -40,26 +39,8 @@ if (config.crayonConfig.clientId && config.hostbillConfig.apiUrl) {
 } else {
   console.log("⚠️  Sync service disabled - missing API configuration");
 }
-
-// Initialize multi-agent crew if enabled
-if (config.enableMultiAgent) {
-  multiAgentCrew = new MultiAgentCrew();
-  console.log("🤖 Multi-agent development crew initialized");
-  
-  // Create initial monitoring task
-  if (multiAgentCrew) {
-    multiAgentCrew.createTask({
-      type: 'analysis',
-      priority: 'medium',
-      payload: { operation: 'system-health-check' },
-    });
-  }
-} else {
-  console.log("⚠️  Multi-agent crew disabled - set ENABLE_MULTI_AGENT=true to enable");
-}
-
 // Simple HTTP server handler
-async function handler(request: Request): Promise<Response> {
+async function handler(request) {
   const url = new URL(request.url);
   const { pathname, searchParams } = url;
 
@@ -84,16 +65,6 @@ async function handler(request: Request): Promise<Response> {
       if (pathname === "/api/sync/manual" && request.method === "POST") {
         if (syncService) {
           const result = await syncService.performFullSync();
-          
-          // Create agent task for sync analysis if multi-agent is enabled
-          if (multiAgentCrew) {
-            await multiAgentCrew.createTask({
-              type: 'analysis',
-              priority: 'medium',
-              payload: { operation: 'sync-result-analysis', result },
-            });
-          }
-          
           return new Response(JSON.stringify(result), { headers });
         } else {
           return new Response(
@@ -114,29 +85,6 @@ async function handler(request: Request): Promise<Response> {
           );
         }
       }
-
-      // Multi-agent API endpoints
-      if (pathname === "/api/agents/status") {
-        if (multiAgentCrew) {
-          const status = multiAgentCrew.getCrewStatus();
-          return new Response(JSON.stringify(status), { headers });
-        } else {
-          return new Response(
-            JSON.stringify({ error: "Multi-agent crew not available" }),
-            { status: 503, headers }
-          );
-        }
-      }
-
-      if (pathname === "/api/agents/tasks" && request.method === "GET") {
-        if (multiAgentCrew) {
-          const filter: any = {};
-          if (searchParams.get("status")) filter.status = searchParams.get("status");
-          if (searchParams.get("type")) filter.type = searchParams.get("type");
-          
-          const tasks = multiAgentCrew.getTasks(filter);
-          return new Response(JSON.stringify(tasks), { headers });
-        } else {
           return new Response(
             JSON.stringify({ error: "Multi-agent crew not available" }),
             { status: 503, headers }
@@ -145,17 +93,6 @@ async function handler(request: Request): Promise<Response> {
       }
 
       if (pathname === "/api/agents/tasks" && request.method === "POST") {
-        if (multiAgentCrew) {
-          try {
-            const body = await request.json();
-            const taskId = await multiAgentCrew.createTask(body);
-            return new Response(JSON.stringify({ taskId }), { headers });
-          } catch (error) {
-            return new Response(
-              JSON.stringify({ error: "Invalid task payload" }),
-              { status: 400, headers }
-            );
-          }
         } else {
           return new Response(
             JSON.stringify({ error: "Multi-agent crew not available" }),
@@ -165,17 +102,6 @@ async function handler(request: Request): Promise<Response> {
       }
 
       if (pathname === "/api/agents/workflow" && request.method === "POST") {
-        if (multiAgentCrew) {
-          try {
-            const body = await request.json();
-            const taskIds = await multiAgentCrew.orchestrateWorkflow(body.workflowType, body.payload);
-            return new Response(JSON.stringify({ taskIds }), { headers });
-          } catch (error) {
-            return new Response(
-              JSON.stringify({ error: "Invalid workflow request" }),
-              { status: 400, headers }
-            );
-          }
         } else {
           return new Response(
             JSON.stringify({ error: "Multi-agent crew not available" }),
@@ -205,7 +131,7 @@ async function handler(request: Request): Promise<Response> {
   }
 }
 
-function serveStaticPage(pathname: string): Response {
+function serveStaticPage(pathname) {
   const html = `
 <!DOCTYPE html>
 <html lang="en">
@@ -424,7 +350,7 @@ function serveStaticPage(pathname: string): Response {
   });
 }
 
-function getPageContent(pathname: string): string {
+function getPageContent(pathname) {
   switch (pathname) {
     case "/":
       return `

@@ -4,59 +4,16 @@
  * For production, replace with proper SQLite or PostgreSQL
  */
 
-export interface CloudIQDatabase {
-  data: any;
-}
 
-export interface SyncRecord {
-  id?: number;
-  hostbill_service_id: string;
-  crayon_subscription_id: string;
-  product_name: string;
-  quantity: number;
-  unit_price: number;
-  last_sync: string;
-  sync_status: 'pending' | 'synced' | 'error';
-  error_message?: string;
-  created_at: string;
-  updated_at: string;
-}
 
-export interface UsageRecord {
-  id?: number;
-  subscription_id: string;
-  usage_date: string;
-  quantity_used: number;
-  cost: number;
-  billing_period: string;
-  synced_to_hostbill: boolean;
-  created_at: string;
-}
 
-export interface OrderRecord {
-  id?: number;
-  crayon_order_id: string;
-  hostbill_order_id?: string;
-  customer_id: string;
-  status: 'pending' | 'approved' | 'rejected' | 'active';
-  total_amount: number;
-  order_data: string; // JSON string
-  created_at: string;
-  updated_at: string;
-}
 
-interface DatabaseData {
-  syncRecords: SyncRecord[];
-  usageRecords: UsageRecord[];
-  orderRecords: OrderRecord[];
-  lastId: number;
-}
 
 export class CloudIQDB {
-  private dbPath: string;
-  private data!: DatabaseData; // Using definite assignment assertion
+  dbPath;
+  data!: DatabaseData; // Using definite assignment assertion
 
-  constructor(dbPath: string = "./data/cloudiq.json") {
+  constructor(dbPath = "./data/cloudiq.json") {
     this.dbPath = dbPath;
     this.loadDatabase();
   }
@@ -64,7 +21,7 @@ export class CloudIQDB {
   /**
    * Load database from JSON file
    */
-  private loadDatabase(): void {
+  loadDatabase() {
     try {
       const jsonData = Deno.readTextFileSync(this.dbPath);
       this.data = JSON.parse(jsonData);
@@ -83,7 +40,7 @@ export class CloudIQDB {
   /**
    * Save database to JSON file
    */
-  private saveDatabase(): void {
+  saveDatabase() {
     try {
       // Ensure directory exists
       const dir = this.dbPath.substring(0, this.dbPath.lastIndexOf('/'));
@@ -100,7 +57,7 @@ export class CloudIQDB {
   /**
    * Get next ID
    */
-  private getNextId(): number {
+  getNextId() {
     this.data.lastId++;
     return this.data.lastId;
   }
@@ -108,7 +65,7 @@ export class CloudIQDB {
   /**
    * Create or update sync record
    */
-  upsertSyncRecord(record: Omit<SyncRecord, 'id' | 'created_at' | 'updated_at'>): number {
+  upsertSyncRecord(record: Omit<SyncRecord, 'id' | 'created_at' | 'updated_at'>) {
     const now = new Date().toISOString();
     
     // Find existing record
@@ -144,7 +101,7 @@ export class CloudIQDB {
   /**
    * Get sync records by status
    */
-  getSyncRecords(status?: string): SyncRecord[] {
+  getSyncRecords(status?): SyncRecord[] {
     let records = this.data.syncRecords;
     
     if (status) {
@@ -159,7 +116,7 @@ export class CloudIQDB {
   /**
    * Add usage record
    */
-  addUsageRecord(record: Omit<UsageRecord, 'id' | 'created_at'>): number {
+  addUsageRecord(record: Omit<UsageRecord, 'id' | 'created_at'>) {
     const now = new Date().toISOString();
     
     // Check for existing record (same subscription, date, period)
@@ -193,7 +150,7 @@ export class CloudIQDB {
   /**
    * Get usage records for billing
    */
-  getUsageRecords(subscriptionId?: string, syncedOnly: boolean = false): UsageRecord[] {
+  getUsageRecords(subscriptionId?, syncedOnly = false): UsageRecord[] {
     let records = this.data.usageRecords;
     
     if (subscriptionId) {
@@ -212,7 +169,7 @@ export class CloudIQDB {
   /**
    * Mark usage records as synced
    */
-  markUsageSynced(usageIds: number[]): void {
+  markUsageSynced(usageIds[]) {
     for (const id of usageIds) {
       const index = this.data.usageRecords.findIndex(r => r.id === id);
       if (index >= 0) {
@@ -225,7 +182,7 @@ export class CloudIQDB {
   /**
    * Create order record
    */
-  createOrderRecord(record: Omit<OrderRecord, 'id' | 'created_at' | 'updated_at'>): number {
+  createOrderRecord(record: Omit<OrderRecord, 'id' | 'created_at' | 'updated_at'>) {
     const now = new Date().toISOString();
     
     const newRecord: OrderRecord = {
@@ -243,7 +200,7 @@ export class CloudIQDB {
   /**
    * Update order status
    */
-  updateOrderStatus(crayonOrderId: string, status: string, hostbillOrderId?: string): void {
+  updateOrderStatus(crayonOrderId, status, hostbillOrderId?) {
     const index = this.data.orderRecords.findIndex(r => r.crayon_order_id === crayonOrderId);
     if (index >= 0) {
       this.data.orderRecords[index].status = status as any;
@@ -258,7 +215,7 @@ export class CloudIQDB {
   /**
    * Get order records
    */
-  getOrderRecords(status?: string): OrderRecord[] {
+  getOrderRecords(status?): OrderRecord[] {
     let records = this.data.orderRecords;
     
     if (status) {
@@ -273,7 +230,7 @@ export class CloudIQDB {
   /**
    * Close database connection (no-op for JSON)
    */
-  close(): void {
+  close() {
     // No-op for JSON file storage
   }
 
