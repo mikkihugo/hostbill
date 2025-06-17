@@ -85,9 +85,24 @@ class HostBillAPIClient
 
     /**
      * Make an HTTP request to the HostBill API
+     * 
+     * @param string $call The API method to call
+     * @param array $args Additional parameters for the API call
+     * @return array The decoded JSON response
+     * @throws \Exception On connection, HTTP, or API errors
      */
     private function makeRequest(string $call, array $args = []): array
     {
+        // Validate call parameter
+        if (empty($call)) {
+            throw new \Exception('API call method cannot be empty');
+        }
+
+        // Validate call format (basic security check)
+        if (!preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $call)) {
+            throw new \Exception('Invalid API call format');
+        }
+
         $postData = array_merge([
             'call' => $call,
             'api_id' => $this->apiId,
