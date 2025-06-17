@@ -57,7 +57,8 @@ class MCPProtocol
                 if ($response !== null) {
                     $this->sendResponse($response);
                 }
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
+                $this->log("Request handling error: " . $e->getMessage());
                 $this->sendError($e->getMessage(), $request['id'] ?? null);
             }
         }
@@ -175,7 +176,8 @@ class MCPProtocol
                     ]
                 ]
             ];
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
+            $this->log("Tool execution error: " . $e->getMessage());
             return [
                 'jsonrpc' => '2.0',
                 'id' => $id,

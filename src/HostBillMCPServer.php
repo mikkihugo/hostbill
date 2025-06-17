@@ -224,7 +224,7 @@ class HostBillMCPServer
     }
 
     /**
-     * Execute an API method
+     * Execute an API method with improved error handling
      */
     private function executeAPIMethod(string $method, array $args): string
     {
@@ -232,7 +232,13 @@ class HostBillMCPServer
             $result = $this->hostbill->callAPI($method, $args);
             return json_encode($result, JSON_PRETTY_PRINT);
         } catch (\Exception $e) {
-            return "Error executing {$method}: " . $e->getMessage();
+            $this->log("API call failed for method '{$method}': " . $e->getMessage());
+            return json_encode([
+                'error' => "Failed to execute method '{$method}'",
+                'message' => $e->getMessage(),
+                'method' => $method,
+                'timestamp' => date('Y-m-d H:i:s')
+            ], JSON_PRETTY_PRINT);
         }
     }
 
@@ -611,14 +617,22 @@ class HostBillMCPServer
         $method = $args['method'] ?? '';
         
         if (empty($method)) {
-            return 'Error: Method name is required';
+            return json_encode(['error' => 'Method name is required'], JSON_PRETTY_PRINT);
+        }
+
+        // Validate method name format (alphanumeric and underscores only)
+        if (!preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $method)) {
+            return json_encode(['error' => 'Invalid method name format'], JSON_PRETTY_PRINT);
         }
 
         try {
             $details = $this->hostbill->getMethodDetails($method);
             return json_encode($details, JSON_PRETTY_PRINT);
         } catch (\Exception $e) {
-            return "Error getting details for {$method}: " . $e->getMessage();
+            return json_encode([
+                'error' => "Failed to get details for method '{$method}'",
+                'message' => $e->getMessage()
+            ], JSON_PRETTY_PRINT);
         }
     }
 
@@ -631,11 +645,25 @@ class HostBillMCPServer
         $parameters = $args['parameters'] ?? [];
         
         if (empty($method)) {
-            return 'Error: Method name is required';
+            return json_encode(['error' => 'Method name is required'], JSON_PRETTY_PRINT);
+        }
+
+        // Validate method name format
+        if (!preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $method)) {
+            return json_encode(['error' => 'Invalid method name format'], JSON_PRETTY_PRINT);
         }
 
         if (!in_array($method, $this->discoveredMethods)) {
-            return "Error: Method '{$method}' is not available or not permitted";
+            return json_encode([
+                'error' => "Method '{$method}' is not available or not permitted",
+                'available_methods' => count($this->discoveredMethods),
+                'hint' => 'Use hostbill_list_methods to see available methods'
+            ], JSON_PRETTY_PRINT);
+        }
+
+        // Validate parameters is an array
+        if (!is_array($parameters)) {
+            return json_encode(['error' => 'Parameters must be an object/array'], JSON_PRETTY_PRINT);
         }
 
         return $this->executeAPIMethod($method, $parameters);
