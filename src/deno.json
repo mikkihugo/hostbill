@@ -15,7 +15,7 @@
     "allowUnreachableCode": false
   },
   "imports": {
-    "$std/": "https://deno.land/std@0.216.0/"
+    "$std/": "https://deno.land/std@0.230.0/"
   },
   "exclude": [
     "data/",
