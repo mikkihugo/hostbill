@@ -4,66 +4,68 @@
  * API Documentation: https://apidocs.crayon.com/
  */
 
-export interface CrayonConfig {
-  clientId: string;
-  clientSecret: string;
-  tenantId: string;
-  apiUrl?: string;
-}
 
-export interface SubscriptionUsage {
-  subscriptionId: string;
-  productName: string;
-  quantity: number;
-  unitPrice: number;
-  totalCost: number;
-  billingPeriod: string;
-  lastUpdated: string;
-}
 
-export interface CSPOrder {
-  orderId: string;
-  customerId: string;
-  subscriptions: Array<{
-    productId: string;
-    productName: string;
-    quantity: number;
-    unitPrice: number;
-  }>;
-  status: 'pending' | 'approved' | 'rejected' | 'active';
-  createdAt: string;
-}
 
-export interface BillingSync {
-  hostbillInvoiceId: string;
-  crayonSubscriptionId: string;
-  amount: number;
-  status: 'synced' | 'pending' | 'error';
-  lastSync: string;
-}
 
 export class CrayonCloudIQClient {
-  private config: CrayonConfig;
-  private accessToken: string | null = null;
-  private tokenExpiry: number = 0;
-
-  constructor(config: CrayonConfig) {
+  constructor(config) {
     this.config = {
       ...config,
       apiUrl: config.apiUrl || 'https://api.crayon.com/api/v1',
     };
+    this.accessToken = null;
+    this.tokenExpiry = 0;
   }
 
   /**
-   * Authenticate with Crayon API using OAuth2
+   * Authenticate with Crayon API using OAuth2 or dynamic user authentication
    */
-  async authenticate(): Promise<void> {
+  async authenticate() {
     const now = Date.now();
     if (this.accessToken && now < this.tokenExpiry) {
       return; // Token still valid
     }
 
     const tokenUrl = `${this.config.apiUrl}/auth/token`;
+    
+    // Use dynamic authentication if enabled
+    if (this.config.dynamicAuth && this.config.username) {
+      const body = new URLSearchParams({
+        grant_type: 'password',
+        username: this.config.username,
+        client_id: this.config.clientId,
+        client_secret: this.config.clientSecret,
+        scope: 'https://api.crayon.com/.default',
+      });
+      
+      console.log(`🔐 Using dynamic authentication for user: ${this.config.username}`);
+      
+      try {
+        const response = await fetch(tokenUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: body.toString(),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Dynamic authentication failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+        this.accessToken = data.access_token;
+        this.tokenExpiry = now + (data.expires_in * 1000);
+        
+        console.log("✅ Dynamic authentication successful");
+        return;
+      } catch (error) {
+        console.error("❌ Dynamic authentication failed, falling back to client credentials");
+      }
+    }
+    
+    // Fallback to client credentials authentication
     const body = new URLSearchParams({
       grant_type: 'client_credentials',
       client_id: this.config.clientId,
@@ -95,7 +97,7 @@ export class CrayonCloudIQClient {
   /**
    * Make authenticated API request
    */
-  private async makeRequest(endpoint: string, options: RequestInit = {}): Promise<any> {
+  async makeRequest(endpoint, options: RequestInit = {}) {
     await this.authenticate();
 
     const url = `${this.config.apiUrl}${endpoint}`;
@@ -118,10 +120,10 @@ export class CrayonCloudIQClient {
   /**
    * Get all active subscriptions for usage billing
    */
-  async getActiveSubscriptions(): Promise<SubscriptionUsage[]> {
+  async getActiveSubscriptions() {
     const data = await this.makeRequest('/subscriptions?status=active');
     
-    return data.items?.map((sub: any) => ({
+    return data.items?.map((sub) => ({
       subscriptionId: sub.id,
       productName: sub.productName,
       quantity: sub.quantity,
@@ -135,7 +137,7 @@ export class CrayonCloudIQClient {
   /**
    * Get subscription usage data for billing
    */
-  async getSubscriptionUsage(subscriptionId: string, fromDate?: string, toDate?: string): Promise<any> {
+  async getSubscriptionUsage(subscriptionId, fromDate?, toDate?) {
     let endpoint = `/subscriptions/${subscriptionId}/usage`;
     
     const params = new URLSearchParams();
@@ -152,7 +154,7 @@ export class CrayonCloudIQClient {
   /**
    * Create a new CSP order
    */
-  async createOrder(customerId: string, items: Array<{productId: string, quantity: number}>): Promise<CSPOrder> {
+  async createOrder(customerId, items: Array<{productId, quantity}>) {
     const orderData = {
       customerId,
       items: items.map(item => ({
@@ -178,7 +180,7 @@ export class CrayonCloudIQClient {
   /**
    * Update order status (approve/reject)
    */
-  async updateOrderStatus(orderId: string, status: 'approved' | 'rejected'): Promise<void> {
+  async updateOrderStatus(orderId, status: 'approved' | 'rejected') {
     await this.makeRequest(`/orders/${orderId}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status }),
@@ -188,11 +190,11 @@ export class CrayonCloudIQClient {
   /**
    * Get billing data for HostBill sync
    */
-  async getBillingData(fromDate: string, toDate: string): Promise<BillingSync[]> {
+  async getBillingData(fromDate, toDate) {
     const endpoint = `/billing/charges?from=${fromDate}&to=${toDate}`;
     const data = await this.makeRequest(endpoint);
     
-    return data.items?.map((charge: any) => ({
+    return data.items?.map((charge) => ({
       hostbillInvoiceId: '', // To be mapped in sync process
       crayonSubscriptionId: charge.subscriptionId,
       amount: charge.amount,
@@ -204,7 +206,7 @@ export class CrayonCloudIQClient {
   /**
    * Get products catalog for Office 365, Teams, etc.
    */
-  async getProductsCatalog(filter?: string): Promise<any[]> {
+  async getProductsCatalog(filter?) {
     let endpoint = '/products';
     if (filter) {
       endpoint += `?filter=${encodeURIComponent(filter)}`;
@@ -217,14 +219,14 @@ export class CrayonCloudIQClient {
   /**
    * Get customer information
    */
-  async getCustomer(customerId: string): Promise<any> {
+  async getCustomer(customerId) {
     return await this.makeRequest(`/customers/${customerId}`);
   }
 
   /**
    * Monitor renewals for sync tracking
    */
-  async getUpcomingRenewals(daysAhead: number = 30): Promise<any[]> {
+  async getUpcomingRenewals(daysAhead = 30) {
     const endpoint = `/subscriptions/renewals?days=${daysAhead}`;
     const data = await this.makeRequest(endpoint);
     return data.items || [];

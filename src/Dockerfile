@@ -10,10 +10,10 @@ COPY . .
 RUN mkdir -p /app/data
 
 # Cache dependencies
-RUN deno cache --reload main.ts
+RUN deno cache --reload main.js
 
 # Expose port
 EXPOSE 8000
 
 # Start command
-CMD ["run", "-A", "--env", "main.ts"]
+CMD ["run", "-A", "--env", "main.js"]

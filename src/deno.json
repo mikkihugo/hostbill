@@ -1,24 +1,23 @@
 {
   "name": "@hostbill/cloud-iq",
   "version": "1.0.0",
-  "exports": "./main.ts",
+  "exports": "./main.js",
   "tasks": {
-    "start": "deno run -A --env ./main.ts",
-    "dev": "deno run -A --env --watch ./main.ts",
+    "start": "deno run -A --env ./main.js",
+    "dev": "deno run -A --env --watch ./main.js",
     "test": "deno test -A",
     "build": "echo 'Build not required for Deno'"
   },
   "compilerOptions": {
     "jsx": "react-jsx",
-    "jsxImportSource": "preact",
-    "strict": true,
-    "allowUnreachableCode": false
+    "jsxImportSource": "preact"
   },
   "imports": {
     "$std/": "https://deno.land/std@0.230.0/"
   },
   "exclude": [
     "data/",
-    "*.db"
+    "*.db",
+    "*.json"
   ]
 }
