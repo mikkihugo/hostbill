@@ -107,31 +107,38 @@ export default function SyncPage({ data }: PageProps<SyncPageData>) {
   const { syncRecords, usageRecords, orderRecords, stats, error, lastSyncResult } = data;
 
   return (
-    <div class="min-h-screen bg-gray-50">
-      <div class="bg-white shadow">
+    <div class="min-h-screen">
+      <div class="glass-effect border-b border-white/20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="py-6 md:flex md:items-center md:justify-between">
-            <div class="flex-1 min-w-0">
-              <h1 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-                Sync Monitoring
-              </h1>
-              <p class="mt-1 text-sm text-gray-500">
-                Monitor and control synchronization between Crayon Cloud-IQ and HostBill
+          <div class="py-8 md:flex md:items-center md:justify-between">
+            <div class="flex-1 min-w-0 animate-fade-in">
+              <div class="flex items-center space-x-3 mb-2">
+                <div class="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-600 rounded-xl flex items-center justify-center">
+                  <i data-lucide="refresh-cw" class="w-6 h-6 text-white"></i>
+                </div>
+                <h1 class="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent sm:text-4xl">
+                  Sync Monitoring
+                </h1>
+              </div>
+              <p class="mt-2 text-gray-600 text-lg">
+                🔄 Monitor and control synchronization between Crayon Cloud-IQ and HostBill
               </p>
             </div>
-            <div class="mt-4 flex md:mt-0 md:ml-4">
+            <div class="mt-6 flex space-x-3 md:mt-0 md:ml-4 animate-fade-in">
               <a
                 href="/"
-                class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                class="inline-flex items-center px-6 py-3 border border-gray-200 rounded-xl shadow-sm text-sm font-semibold text-gray-700 bg-white/80 hover:bg-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 hover-lift"
               >
+                <i data-lucide="home" class="w-4 h-4 mr-2"></i>
                 Dashboard
               </a>
-              <form method="POST" class="inline ml-3">
+              <form method="POST" class="inline">
                 <input type="hidden" name="action" value="manual_sync" />
                 <button
                   type="submit"
-                  class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+                  class="inline-flex items-center px-6 py-3 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 hover-lift"
                 >
+                  <i data-lucide="play-circle" class="w-4 h-4 mr-2"></i>
                   Manual Sync
                 </button>
               </form>
@@ -140,97 +147,135 @@ export default function SyncPage({ data }: PageProps<SyncPageData>) {
         </div>
       </div>
 
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {error && (
-          <div class="mb-8 p-4 bg-red-50 border border-red-200 rounded-md">
-            <h3 class="text-sm font-medium text-red-800">Error</h3>
-            <p class="mt-1 text-sm text-red-700">{error}</p>
+          <div class="mb-8 p-4 bg-red-50 border-l-4 border-red-400 rounded-lg animate-fade-in">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <i data-lucide="alert-circle" class="w-5 h-5 text-red-400"></i>
+              </div>
+              <div class="ml-3">
+                <h3 class="text-sm font-semibold text-red-800">Error</h3>
+                <p class="mt-1 text-sm text-red-700">{error}</p>
+              </div>
+            </div>
           </div>
         )}
 
         {lastSyncResult && (
-          <div class="mb-8 p-4 bg-green-50 border border-green-200 rounded-md">
-            <h3 class="text-sm font-medium text-green-800">Sync Completed</h3>
-            <p class="mt-1 text-sm text-green-700">{lastSyncResult}</p>
+          <div class="mb-8 p-4 bg-green-50 border-l-4 border-green-400 rounded-lg animate-fade-in">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <i data-lucide="check-circle" class="w-5 h-5 text-green-400"></i>
+              </div>
+              <div class="ml-3">
+                <h3 class="text-sm font-semibold text-green-800">Sync Completed</h3>
+                <p class="mt-1 text-sm text-green-700">{lastSyncResult}</p>
+              </div>
+            </div>
           </div>
         )}
 
         {/* Summary Statistics */}
-        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-          <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="p-5">
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-10 animate-fade-in">
+          <div class="bg-white/70 backdrop-blur-sm overflow-hidden shadow-lg rounded-2xl border border-white/20 hover-lift">
+            <div class="p-6">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
-                  <div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
-                    <span class="text-white text-sm font-medium">T</span>
+                  <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <i data-lucide="database" class="w-6 h-6 text-white"></i>
                   </div>
                 </div>
                 <div class="ml-5 w-0 flex-1">
                   <dl>
-                    <dt class="text-sm font-medium text-gray-500 truncate">Total Syncs</dt>
-                    <dd class="text-lg font-medium text-gray-900">{stats.syncRecords || 0}</dd>
+                    <dt class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Total Syncs</dt>
+                    <dd class="text-2xl font-bold text-gray-900">{stats.syncRecords || 0}</dd>
                   </dl>
                 </div>
               </div>
             </div>
+            <div class="bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-3">
+              <div class="text-sm text-blue-700 font-medium">
+                <i data-lucide="trending-up" class="w-4 h-4 inline mr-1"></i>
+                All records
+              </div>
+            </div>
           </div>
 
-          <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="p-5">
+          <div class="bg-white/70 backdrop-blur-sm overflow-hidden shadow-lg rounded-2xl border border-white/20 hover-lift">
+            <div class="p-6">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
-                  <div class="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
-                    <span class="text-white text-sm font-medium">✓</span>
+                  <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <i data-lucide="check-circle" class="w-6 h-6 text-white"></i>
                   </div>
                 </div>
                 <div class="ml-5 w-0 flex-1">
                   <dl>
-                    <dt class="text-sm font-medium text-gray-500 truncate">Synced</dt>
-                    <dd class="text-lg font-medium text-gray-900">
+                    <dt class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Synced</dt>
+                    <dd class="text-2xl font-bold text-gray-900">
                       {stats.syncStatusCounts?.synced || 0}
                     </dd>
                   </dl>
                 </div>
               </div>
             </div>
+            <div class="bg-gradient-to-r from-green-50 to-green-100 px-6 py-3">
+              <div class="text-sm text-green-700 font-medium">
+                <i data-lucide="check" class="w-4 h-4 inline mr-1"></i>
+                Completed
+              </div>
+            </div>
           </div>
 
-          <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="p-5">
+          <div class="bg-white/70 backdrop-blur-sm overflow-hidden shadow-lg rounded-2xl border border-white/20 hover-lift">
+            <div class="p-6">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
-                  <div class="w-8 h-8 bg-orange-500 rounded-md flex items-center justify-center">
-                    <span class="text-white text-sm font-medium">⏳</span>
+                  <div class="w-12 h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <i data-lucide="clock" class="w-6 h-6 text-white"></i>
                   </div>
                 </div>
                 <div class="ml-5 w-0 flex-1">
                   <dl>
-                    <dt class="text-sm font-medium text-gray-500 truncate">Pending</dt>
-                    <dd class="text-lg font-medium text-gray-900">
+                    <dt class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Pending</dt>
+                    <dd class="text-2xl font-bold text-gray-900">
                       {stats.syncStatusCounts?.pending || 0}
                     </dd>
                   </dl>
                 </div>
               </div>
             </div>
+            <div class="bg-gradient-to-r from-orange-50 to-orange-100 px-6 py-3">
+              <div class="text-sm text-orange-700 font-medium">
+                <i data-lucide="loader" class="w-4 h-4 inline mr-1"></i>
+                Awaiting
+              </div>
+            </div>
           </div>
 
-          <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="p-5">
+          <div class="bg-white/70 backdrop-blur-sm overflow-hidden shadow-lg rounded-2xl border border-white/20 hover-lift">
+            <div class="p-6">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
-                  <div class="w-8 h-8 bg-red-500 rounded-md flex items-center justify-center">
-                    <span class="text-white text-sm font-medium">✗</span>
+                  <div class="w-12 h-12 bg-gradient-to-r from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <i data-lucide="alert-circle" class="w-6 h-6 text-white"></i>
                   </div>
                 </div>
                 <div class="ml-5 w-0 flex-1">
                   <dl>
-                    <dt class="text-sm font-medium text-gray-500 truncate">Errors</dt>
-                    <dd class="text-lg font-medium text-gray-900">
+                    <dt class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Errors</dt>
+                    <dd class="text-2xl font-bold text-gray-900">
                       {stats.syncStatusCounts?.error || 0}
                     </dd>
                   </dl>
                 </div>
+              </div>
+            </div>
+            <div class="bg-gradient-to-r from-red-50 to-red-100 px-6 py-3">
+              <div class="text-sm text-red-700 font-medium">
+                <i data-lucide="x-circle" class="w-4 h-4 inline mr-1"></i>
+                Failed
               </div>
             </div>
           </div>
@@ -456,6 +501,13 @@ export default function SyncPage({ data }: PageProps<SyncPageData>) {
           </div>
         </div>
       </div>
+      
+      <script>
+        {/* Initialize Lucide icons */}
+        if (typeof lucide !== 'undefined') {
+          lucide.createIcons();
+        }
+      </script>
     </div>
   );
 }
