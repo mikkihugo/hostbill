@@ -9,9 +9,12 @@
 
 
 
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
+
 export class CloudIQDB {
   dbPath;
-  data!: DatabaseData; // Using definite assignment assertion
+  data; // Using definite assignment assertion
 
   constructor(dbPath = "./data/cloudiq.json") {
     this.dbPath = dbPath;
@@ -23,8 +26,18 @@ export class CloudIQDB {
    */
   loadDatabase() {
     try {
-      const jsonData = Deno.readTextFileSync(this.dbPath);
-      this.data = JSON.parse(jsonData);
+      // Ensure directory exists
+      const dir = dirname(this.dbPath);
+      if (!existsSync(dir)) {
+        mkdirSync(dir, { recursive: true });
+      }
+      
+      if (existsSync(this.dbPath)) {
+        const jsonData = readFileSync(this.dbPath, 'utf8');
+        this.data = JSON.parse(jsonData);
+      } else {
+        throw new Error('File does not exist');
+      }
     } catch {
       // Initialize empty database if file doesn't exist
       this.data = {
@@ -43,12 +56,12 @@ export class CloudIQDB {
   saveDatabase() {
     try {
       // Ensure directory exists
-      const dir = this.dbPath.substring(0, this.dbPath.lastIndexOf('/'));
-      if (dir) {
-        Deno.mkdirSync(dir, { recursive: true });
+      const dir = dirname(this.dbPath);
+      if (!existsSync(dir)) {
+        mkdirSync(dir, { recursive: true });
       }
       
-      Deno.writeTextFileSync(this.dbPath, JSON.stringify(this.data, null, 2));
+      writeFileSync(this.dbPath, JSON.stringify(this.data, null, 2), 'utf8');
     } catch (error) {
       console.error('Failed to save database:', error);
     }
@@ -65,7 +78,7 @@ export class CloudIQDB {
   /**
    * Create or update sync record
    */
-  upsertSyncRecord(record: Omit<SyncRecord, 'id' | 'created_at' | 'updated_at'>) {
+  upsertSyncRecord(record) {
     const now = new Date().toISOString();
     
     // Find existing record
@@ -83,10 +96,10 @@ export class CloudIQDB {
         updated_at: now,
       };
       this.saveDatabase();
-      return existing.id!;
+      return existing.id;
     } else {
       // Create new
-      const newRecord: SyncRecord = {
+      const newRecord = {
         id: this.getNextId(),
         ...record,
         created_at: now,
@@ -94,14 +107,14 @@ export class CloudIQDB {
       };
       this.data.syncRecords.push(newRecord);
       this.saveDatabase();
-      return newRecord.id!;
+      return newRecord.id;
     }
   }
 
   /**
    * Get sync records by status
    */
-  getSyncRecords(status?): SyncRecord[] {
+  getSyncRecords(status) {
     let records = this.data.syncRecords;
     
     if (status) {
@@ -116,7 +129,7 @@ export class CloudIQDB {
   /**
    * Add usage record
    */
-  addUsageRecord(record: Omit<UsageRecord, 'id' | 'created_at'>) {
+  addUsageRecord(record) {
     const now = new Date().toISOString();
     
     // Check for existing record (same subscription, date, period)
@@ -133,24 +146,24 @@ export class CloudIQDB {
         ...record,
       };
       this.saveDatabase();
-      return this.data.usageRecords[existingIndex].id!;
+      return this.data.usageRecords[existingIndex].id;
     } else {
       // Create new
-      const newRecord: UsageRecord = {
+      const newRecord = {
         id: this.getNextId(),
         ...record,
         created_at: now,
       };
       this.data.usageRecords.push(newRecord);
       this.saveDatabase();
-      return newRecord.id!;
+      return newRecord.id;
     }
   }
 
   /**
    * Get usage records for billing
    */
-  getUsageRecords(subscriptionId?, syncedOnly = false): UsageRecord[] {
+  getUsageRecords(subscriptionId, syncedOnly = false) {
     let records = this.data.usageRecords;
     
     if (subscriptionId) {
@@ -169,7 +182,7 @@ export class CloudIQDB {
   /**
    * Mark usage records as synced
    */
-  markUsageSynced(usageIds[]) {
+  markUsageSynced(usageIds) {
     for (const id of usageIds) {
       const index = this.data.usageRecords.findIndex(r => r.id === id);
       if (index >= 0) {
@@ -182,10 +195,10 @@ export class CloudIQDB {
   /**
    * Create order record
    */
-  createOrderRecord(record: Omit<OrderRecord, 'id' | 'created_at' | 'updated_at'>) {
+  createOrderRecord(record) {
     const now = new Date().toISOString();
     
-    const newRecord: OrderRecord = {
+    const newRecord = {
       id: this.getNextId(),
       ...record,
       created_at: now,
@@ -194,16 +207,16 @@ export class CloudIQDB {
     
     this.data.orderRecords.push(newRecord);
     this.saveDatabase();
-    return newRecord.id!;
+    return newRecord.id;
   }
 
   /**
    * Update order status
    */
-  updateOrderStatus(crayonOrderId, status, hostbillOrderId?) {
+  updateOrderStatus(crayonOrderId, status, hostbillOrderId) {
     const index = this.data.orderRecords.findIndex(r => r.crayon_order_id === crayonOrderId);
     if (index >= 0) {
-      this.data.orderRecords[index].status = status as any;
+      this.data.orderRecords[index].status = status;
       if (hostbillOrderId) {
         this.data.orderRecords[index].hostbill_order_id = hostbillOrderId;
       }
@@ -215,7 +228,7 @@ export class CloudIQDB {
   /**
    * Get order records
    */
-  getOrderRecords(status?): OrderRecord[] {
+  getOrderRecords(status) {
     let records = this.data.orderRecords;
     
     if (status) {
@@ -237,11 +250,11 @@ export class CloudIQDB {
   /**
    * Get database statistics
    */
-  getStats(): Record<string, any> {
+  getStats() {
     const syncStatusCounts = this.data.syncRecords.reduce((counts, record) => {
       counts[record.sync_status] = (counts[record.sync_status] || 0) + 1;
       return counts;
-    }, {} as Record<string, number>);
+    }, {});
 
     return {
       syncRecords: this.data.syncRecords.length,

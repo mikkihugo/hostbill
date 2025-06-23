@@ -1,0 +1,27 @@
+{
+  "name": "@hostbill/cloud-iq",
+  "version": "1.0.0",
+  "description": "Cloud-IQ HostBill Integration with Microsoft GenAI",
+  "main": "src/main.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/main.js",
+    "dev": "node --watch src/main.js",
+    "test": "node --test",
+    "build": "echo 'Build not required for Node.js'"
+  },
+  "keywords": ["hostbill", "crayon", "cloud-iq", "genai", "microsoft"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "genaiscript": "^2.0.4",
+    "@genaiscript/core": "^2.0.4",
+    "@genaiscript/api": "^2.0.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

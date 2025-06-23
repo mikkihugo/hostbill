@@ -1,11 +1,13 @@
 # Cloud-IQ HostBill Integration
 
-A comprehensive Crayon Cloud-IQ integration with HostBill for CSP (Cloud Solution Provider) billing management built with Deno.
+A comprehensive Crayon Cloud-IQ integration with HostBill for CSP (Cloud Solution Provider) billing management built with Node.js and Microsoft GenAI Script.
 
 ## Features
 
 - **Crayon Cloud-IQ API Integration**: Full support for Microsoft 365, Teams, and other CSP services
 - **HostBill Integration**: Automatic product/service management and billing sync
+- **Microsoft GenAI Agents**: AI-powered billing analysis, customer support, and process automation
+- **GenAI Proxy API**: Direct access to GenAI Script functionality for custom workflows
 - **Order Management**: Web-based order creation and routing to HostBill
 - **Usage Tracking**: Real-time usage monitoring and billing synchronization
 - **Renewal Management**: Automated renewal tracking and sync
@@ -14,7 +16,8 @@ A comprehensive Crayon Cloud-IQ integration with HostBill for CSP (Cloud Solutio
 
 ## Architecture
 
-- **Backend**: Deno runtime with modern JavaScript
+- **Backend**: Node.js runtime with modern JavaScript/ES modules
+- **AI Integration**: Microsoft GenAI Script for intelligent automation
 - **Database**: JSON-based file storage with PostgreSQL migration path
 - **APIs**: Crayon Cloud-IQ REST API and HostBill API integration
 - **Deployment**: Docker containers with health checks
@@ -23,35 +26,46 @@ A comprehensive Crayon Cloud-IQ integration with HostBill for CSP (Cloud Solutio
 
 ### Prerequisites
 
-- Deno 2.3+ installed
+- Node.js 18+ installed
 - Crayon Cloud-IQ API credentials
 - HostBill instance with API access
+- OpenAI API key (for GenAI features)
 
 ### Environment Setup
 
-1. Copy the environment template:
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Copy the environment template:
    ```bash
    cp .env.example .env
    ```
 
-2. Configure your API credentials in `.env`:
+3. Configure your API credentials in `.env`:
    ```bash
-   # Crayon Cloud-IQ API Configuration
+   # HostBill Configuration
+   HOSTBILL_URL=https://your-hostbill-instance.com
+   HOSTBILL_API_ID=your_hostbill_api_id
+   HOSTBILL_API_KEY=your_hostbill_api_key
+
+   # Crayon Cloud-IQ Configuration
    CRAYON_CLIENT_ID=your_crayon_client_id
    CRAYON_CLIENT_SECRET=your_crayon_client_secret
    CRAYON_TENANT_ID=your_crayon_tenant_id
 
-   # HostBill API Configuration
-   HOSTBILL_URL=https://your-hostbill-instance.com
-   HOSTBILL_API_ID=your_hostbill_api_id
-   HOSTBILL_API_KEY=your_hostbill_api_key
+   # GenAI Configuration
+   ENABLE_GENAI=true
+   GENAI_API_KEY=your_openai_api_key
+   GENAI_MODEL=gpt-4
    ```
 
 ### Development
 
-1. Install dependencies and start development server:
+1. Start development server:
    ```bash
-   deno task dev
+   npm run dev
    ```
 
 2. Open your browser to `http://localhost:8000`
@@ -73,16 +87,32 @@ A comprehensive Crayon Cloud-IQ integration with HostBill for CSP (Cloud Solutio
 
 1. Build and start the application:
    ```bash
-   deno task start
+   npm start
    ```
 
 ## API Endpoints
 
 ### Web Routes
 
-- `/` - Main dashboard with sync statistics
+- `/` - Main dashboard with sync statistics and agent status
 - `/orders` - Order creation and management
 - `/sync` - Sync monitoring and manual controls
+
+### API Routes
+
+#### Sync Management
+- `POST /api/sync/manual` - Trigger manual synchronization
+- `GET /api/sync/stats` - Get synchronization statistics
+
+#### GenAI Agent Management
+- `GET /api/agents/status` - Get agent status and metrics
+- `POST /api/agents/tasks` - Create new AI agent task
+- `GET /api/agents/tasks` - List all tasks
+- `POST /api/agents/workflow` - Process multi-step workflow
+
+#### GenAI Proxy API
+- `POST /api/genai/execute` - Execute GenAI Script directly
+- `GET /api/genai/models` - Get available AI models
 
 ### API Routes
 
