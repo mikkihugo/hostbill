@@ -153,6 +153,25 @@ async function handleRequest(request) {
         }
       }
 
+      // GenAI Proxy API endpoints
+      if (pathname === "/api/genai/execute" && request.method === "POST") {
+        try {
+          const scriptData = await request.json();
+          const result = await genAiService.executeGenAIScript(scriptData);
+          return new Response(JSON.stringify(result), { headers });
+        } catch (error) {
+          return new Response(
+            JSON.stringify({ error: error.message }),
+            { status: 500, headers }
+          );
+        }
+      }
+
+      if (pathname === "/api/genai/models") {
+        const models = genAiService.getAvailableModels();
+        return new Response(JSON.stringify(models), { headers });
+      }
+
       return new Response(
         JSON.stringify({ error: "API endpoint not found" }),
         { status: 404, headers }
