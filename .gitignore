@@ -14,3 +14,8 @@ typescript-server/.env
 *.tmp
 .env
 .env.local
+
+# Test files
+test_*.js
+*_test.js
+*.test.js

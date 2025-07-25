@@ -115,22 +115,30 @@ export const handler: Handlers<OrderPageData> = {
 
 export default function OrderPage({ data }: PageProps<OrderPageData>) {
   return (
-    <div class="min-h-screen bg-gray-50 py-8">
+    <div class="min-h-screen py-10">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="bg-white shadow rounded-lg">
-          <div class="px-6 py-4 border-b border-gray-200">
-            <h1 class="text-2xl font-bold text-gray-900">Cloud-IQ Service Orders</h1>
-            <p class="mt-1 text-sm text-gray-600">
-              Order Microsoft 365, Teams, and other CSP services managed through Crayon Cloud-IQ
+        <div class="bg-white/70 backdrop-blur-sm shadow-xl rounded-2xl border border-white/20 animate-fade-in">
+          <div class="px-8 py-6 border-b border-gray-100">
+            <div class="flex items-center mb-2">
+              <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center mr-4">
+                <i data-lucide="shopping-cart" class="w-6 h-6 text-white"></i>
+              </div>
+              <h1 class="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">Cloud-IQ Service Orders</h1>
+            </div>
+            <p class="text-gray-600 text-lg">
+              🚀 Order Microsoft 365, Teams, and other CSP services managed through Crayon Cloud-IQ
             </p>
           </div>
 
-          <div class="px-6 py-4">
+          <div class="px-8 py-8">
             {data.error && (
-              <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+              <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-400 rounded-lg animate-fade-in">
                 <div class="flex">
+                  <div class="flex-shrink-0">
+                    <i data-lucide="alert-circle" class="w-5 h-5 text-red-400"></i>
+                  </div>
                   <div class="ml-3">
-                    <h3 class="text-sm font-medium text-red-800">Error</h3>
+                    <h3 class="text-sm font-semibold text-red-800">Error</h3>
                     <p class="mt-1 text-sm text-red-700">{data.error}</p>
                   </div>
                 </div>
@@ -138,27 +146,31 @@ export default function OrderPage({ data }: PageProps<OrderPageData>) {
             )}
 
             {data.success && (
-              <div class="mb-4 p-4 bg-green-50 border border-green-200 rounded-md">
+              <div class="mb-6 p-4 bg-green-50 border-l-4 border-green-400 rounded-lg animate-fade-in">
                 <div class="flex">
+                  <div class="flex-shrink-0">
+                    <i data-lucide="check-circle" class="w-5 h-5 text-green-400"></i>
+                  </div>
                   <div class="ml-3">
-                    <h3 class="text-sm font-medium text-green-800">Success</h3>
+                    <h3 class="text-sm font-semibold text-green-800">Success</h3>
                     <p class="mt-1 text-sm text-green-700">{data.success}</p>
                   </div>
                 </div>
               </div>
             )}
 
-            <form method="POST" class="space-y-6">
-              <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                <div>
-                  <label for="customerId" class="block text-sm font-medium text-gray-700">
+            <form method="POST" class="space-y-8">
+              <div class="grid grid-cols-1 gap-8 sm:grid-cols-2">
+                <div class="space-y-2">
+                  <label for="customerId" class="block text-sm font-semibold text-gray-700">
+                    <i data-lucide="user" class="w-4 h-4 inline mr-1"></i>
                     Customer
                   </label>
                   <select
                     id="customerId"
                     name="customerId"
                     required
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white/90 backdrop-blur-sm"
                   >
                     <option value="">Select a customer</option>
                     {data.customers.map((customer) => (
@@ -169,15 +181,16 @@ export default function OrderPage({ data }: PageProps<OrderPageData>) {
                   </select>
                 </div>
 
-                <div>
-                  <label for="billingCycle" class="block text-sm font-medium text-gray-700">
+                <div class="space-y-2">
+                  <label for="billingCycle" class="block text-sm font-semibold text-gray-700">
+                    <i data-lucide="calendar" class="w-4 h-4 inline mr-1"></i>
                     Billing Cycle
                   </label>
                   <select
                     id="billingCycle"
                     name="billingCycle"
                     required
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white/90 backdrop-blur-sm"
                   >
                     <option value="monthly">Monthly</option>
                     <option value="annually">Annually</option>
@@ -185,15 +198,16 @@ export default function OrderPage({ data }: PageProps<OrderPageData>) {
                 </div>
               </div>
 
-              <div>
-                <label for="productId" class="block text-sm font-medium text-gray-700">
+              <div class="space-y-2">
+                <label for="productId" class="block text-sm font-semibold text-gray-700">
+                  <i data-lucide="package" class="w-4 h-4 inline mr-1"></i>
                   Product/Service
                 </label>
                 <select
                   id="productId"
                   name="productId"
                   required
-                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white/90 backdrop-blur-sm"
                 >
                   <option value="">Select a product</option>
                   {data.products.map((product) => (
@@ -204,8 +218,9 @@ export default function OrderPage({ data }: PageProps<OrderPageData>) {
                 </select>
               </div>
 
-              <div>
-                <label for="quantity" class="block text-sm font-medium text-gray-700">
+              <div class="space-y-2">
+                <label for="quantity" class="block text-sm font-semibold text-gray-700">
+                  <i data-lucide="hash" class="w-4 h-4 inline mr-1"></i>
                   Quantity
                 </label>
                 <input
@@ -215,21 +230,23 @@ export default function OrderPage({ data }: PageProps<OrderPageData>) {
                   min="1"
                   defaultValue="1"
                   required
-                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white/90 backdrop-blur-sm"
                 />
               </div>
 
-              <div class="flex justify-end space-x-3">
+              <div class="flex justify-end space-x-4 pt-4">
                 <button
                   type="button"
-                  class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  class="px-6 py-3 text-sm font-semibold text-gray-700 bg-white/90 border border-gray-300 rounded-xl shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 hover-lift"
                 >
+                  <i data-lucide="x" class="w-4 h-4 inline mr-1"></i>
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  class="px-6 py-3 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 border border-transparent rounded-xl shadow-sm hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 hover-lift"
                 >
+                  <i data-lucide="shopping-cart" class="w-4 h-4 inline mr-1"></i>
                   Create Order
                 </button>
               </div>
@@ -237,28 +254,49 @@ export default function OrderPage({ data }: PageProps<OrderPageData>) {
           </div>
         </div>
 
-        <div class="mt-8 bg-white shadow rounded-lg">
-          <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-900">Available Products</h2>
+        <div class="mt-10 bg-white/70 backdrop-blur-sm shadow-xl rounded-2xl border border-white/20 animate-fade-in">
+          <div class="px-8 py-6 border-b border-gray-100">
+            <div class="flex items-center">
+              <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg flex items-center justify-center mr-3">
+                <i data-lucide="grid-3x3" class="w-5 h-5 text-white"></i>
+              </div>
+              <h2 class="text-xl font-bold text-gray-900">Available Products</h2>
+            </div>
           </div>
-          <div class="px-6 py-4">
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div class="px-8 py-8">
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {data.products.map((product) => (
-                <div key={product.id} class="border border-gray-200 rounded-lg p-4">
-                  <h3 class="text-sm font-medium text-gray-900">{product.name}</h3>
-                  <p class="mt-1 text-sm text-gray-600">
+                <div key={product.id} class="bg-white/80 border-2 border-gray-200 rounded-2xl p-6 hover:border-blue-300 hover:shadow-lg transition-all duration-300 hover-lift">
+                  <div class="flex items-start justify-between mb-4">
+                    <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                      <i data-lucide="box" class="w-5 h-5 text-white"></i>
+                    </div>
+                    {product.price && (
+                      <div class="bg-gradient-to-r from-green-100 to-green-200 px-3 py-1 rounded-full">
+                        <span class="text-sm font-bold text-green-800">${product.price}/mo</span>
+                      </div>
+                    )}
+                  </div>
+                  <h3 class="text-lg font-bold text-gray-900 mb-2">{product.name}</h3>
+                  <p class="text-sm text-gray-600 leading-relaxed">
                     {product.description || "Microsoft CSP Service"}
                   </p>
-                  {product.price && (
-                    <p class="mt-2 text-sm font-semibold text-indigo-600">
-                      ${product.price}/month
-                    </p>
-                  )}
+                  <div class="mt-4 flex items-center text-blue-600 font-medium">
+                    <i data-lucide="info" class="w-4 h-4 mr-1"></i>
+                    <span class="text-xs">CSP Service</span>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         </div>
+        
+        <script>
+          {/* Initialize Lucide icons */}
+          if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+          }
+        </script>
       </div>
     </div>
   );
