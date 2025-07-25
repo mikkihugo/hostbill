@@ -5,8 +5,7 @@
 import { CrayonCloudIQClient } from './api/crayon.js';
 import { HostBillAPIClient } from './api/hostbill.js';
 import { CloudIQDB } from './db/sqlite.js';
-
-// Configuration for sync service
+import { syncLogger } from './logger.js';
 
 export class CloudIQSyncService {
   constructor(config) {
@@ -22,18 +21,18 @@ export class CloudIQSyncService {
   startPeriodicSync() {
     const intervalMinutes = this.config.syncIntervalMinutes || 60; // Default 1 hour
     
-    console.log(`Starting periodic sync every ${intervalMinutes} minutes`);
+    syncLogger.logSyncStart('periodic_setup');
     
     this.syncInterval = setInterval(async () => {
       try {
         await this.performFullSync();
       } catch (error) {
-        console.error('Periodic sync failed:', error);
+        syncLogger.logSyncError('periodic', error);
       }
     }, intervalMinutes * 60 * 1000);
 
     // Perform initial sync
-    this.performFullSync().catch(console.error);
+    this.performFullSync().catch(error => syncLogger.logSyncError('initial', error));
   }
 
   /**
@@ -43,7 +42,7 @@ export class CloudIQSyncService {
     if (this.syncInterval) {
       clearInterval(this.syncInterval);
       this.syncInterval = undefined;
-      console.log('Periodic sync stopped');
+      syncLogger.logSyncComplete('periodic_stop', { message: 'Periodic sync stopped' });
     }
   }
 
@@ -51,7 +50,8 @@ export class CloudIQSyncService {
    * Perform full synchronization
    */
   async performFullSync() {
-    console.log('Starting full synchronization...');
+    const startTime = Date.now();
+    syncLogger.logSyncStart('full_sync');
     
     const result = {
       success: true,
@@ -87,13 +87,17 @@ export class CloudIQSyncService {
       await this.processUpcomingRenewals(result);
 
       result.message = `Sync completed: ${result.syncedCount} items synced, ${result.errorCount} errors`;
-      console.log(result.message);
+      result.duration = Date.now() - startTime;
+      
+      syncLogger.logSyncComplete('full_sync', result);
 
     } catch (error) {
       result.success = false;
       result.message = `Sync failed: ${error instanceof Error ? error.message : String(error)}`;
       result.errors.push(result.message);
-      console.error(result.message);
+      result.duration = Date.now() - startTime;
+      
+      syncLogger.logSyncError('full_sync', error);
     }
 
     return result;
