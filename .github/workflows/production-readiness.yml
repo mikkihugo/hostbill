@@ -1,0 +1,284 @@
+name: Production Readiness CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  NODE_VERSION: '20'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Code Quality and Testing
+  quality:
+    name: Code Quality & Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Lint code
+      run: npm run lint
+
+    - name: Check code formatting
+      run: npm run format:check
+
+    - name: Run tests
+      run: npm run test:coverage
+
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      if: success()
+      with:
+        file: ./coverage/lcov.info
+        flags: unittests
+        name: codecov-umbrella
+
+  # Security Scanning
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run security audit
+      run: npm audit --audit-level=moderate
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: javascript
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+
+  # Build and Test Docker Image
+  docker:
+    name: Docker Build & Test
+    runs-on: ubuntu-latest
+    needs: [quality, security]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: false
+        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Test Docker image
+      run: |
+        docker run --rm -d --name test-container \
+          -p 8000:8000 \
+          -e NODE_ENV=test \
+          -e CRAYON_CLIENT_ID=test_client_id_1234567890 \
+          -e CRAYON_CLIENT_SECRET=test_client_secret_12345678901234567890 \
+          -e CRAYON_TENANT_ID=test_tenant_id \
+          -e HOSTBILL_URL=https://hostbill.example.com \
+          -e HOSTBILL_API_ID=test_api_id \
+          -e HOSTBILL_API_KEY=test_api_key_1234567890 \
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test
+        
+        # Wait for container to start
+        sleep 10
+        
+        # Test health endpoint
+        curl -f http://localhost:8000/health || exit 1
+        
+        # Cleanup
+        docker stop test-container
+
+  # Performance Testing
+  performance:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    needs: [docker]
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    - name: Start application
+      run: |
+        npm ci
+        npm start &
+        sleep 10
+      env:
+        NODE_ENV: test
+        PORT: 8000
+        CRAYON_CLIENT_ID: test_client_id_1234567890
+        CRAYON_CLIENT_SECRET: test_client_secret_12345678901234567890
+        CRAYON_TENANT_ID: test_tenant_id
+        HOSTBILL_URL: https://hostbill.example.com
+        HOSTBILL_API_ID: test_api_id
+        HOSTBILL_API_KEY: test_api_key_1234567890
+
+    - name: Run load tests
+      run: |
+        # Simple load test using curl
+        for i in {1..50}; do
+          curl -s http://localhost:8000/health > /dev/null &
+        done
+        wait
+        
+        # Test rate limiting
+        for i in {1..15}; do
+          response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/api/sync/stats)
+          if [ "$response" = "429" ]; then
+            echo "Rate limiting working correctly"
+            break
+          fi
+        done
+
+  # Deploy to Staging (on main branch)
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [quality, security, docker]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: staging
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=sha,prefix={{branch}}-
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Deploy to staging
+      run: |
+        echo "Deploying to staging environment..."
+        # Add deployment commands here
+        # e.g., kubectl apply, docker-compose, etc.
+
+  # Production Deployment (manual approval required)
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [deploy-staging]
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Deploy to production
+      run: |
+        echo "Deploying to production environment..."
+        # Add production deployment commands here
+        
+    - name: Post-deployment health check
+      run: |
+        echo "Running post-deployment health checks..."
+        # Add health check commands here
+
+    - name: Notify team
+      if: success()
+      run: |
+        echo "Production deployment successful!"
+        # Add notification logic here (Slack, email, etc.)
+
+  # Production Readiness Report
+  readiness-report:
+    name: Production Readiness Report
+    runs-on: ubuntu-latest
+    needs: [quality, security, docker, performance]
+    if: always()
+    
+    steps:
+    - name: Generate readiness report
+      run: |
+        echo "# Production Readiness Report" > report.md
+        echo "" >> report.md
+        echo "## Test Results" >> report.md
+        echo "- Code Quality: ${{ needs.quality.result }}" >> report.md
+        echo "- Security Scan: ${{ needs.security.result }}" >> report.md
+        echo "- Docker Build: ${{ needs.docker.result }}" >> report.md
+        echo "- Performance Tests: ${{ needs.performance.result }}" >> report.md
+        echo "" >> report.md
+        echo "## Overall Score" >> report.md
+        
+        # Calculate score based on results
+        score=0
+        [ "${{ needs.quality.result }}" = "success" ] && score=$((score + 25))
+        [ "${{ needs.security.result }}" = "success" ] && score=$((score + 25))
+        [ "${{ needs.docker.result }}" = "success" ] && score=$((score + 25))
+        [ "${{ needs.performance.result }}" = "success" ] && score=$((score + 25))
+        
+        echo "Production Readiness Score: $score/100" >> report.md
+        
+        if [ $score -ge 94 ]; then
+          echo "✅ **READY FOR PRODUCTION** (Score: $score/100)" >> report.md
+        else
+          echo "❌ **NOT READY FOR PRODUCTION** (Score: $score/100)" >> report.md
+        fi
+        
+        cat report.md
+
+    - name: Upload readiness report
+      uses: actions/upload-artifact@v4
+      with:
+        name: production-readiness-report
+        path: report.md
