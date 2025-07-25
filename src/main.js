@@ -1,29 +1,53 @@
-#!/usr/bin/env -S deno run -A --env
+#!/usr/bin/env node
 
 /**
- * Cloud-IQ Deno Application
+ * Cloud-IQ Node.js Application
  * Standalone HTTP server for Crayon Cloud-IQ and HostBill integration
- * With multi-agent development crews and federated MCP support
+ * With Microsoft GenAI agent support and proxy API
  */
 
 import { CloudIQSyncService } from "./lib/sync.js";
+import { GenAIService } from "./lib/genai.js";
+import { createServer } from 'node:http';
+import { parse } from 'node:url';
+
+// Simple Response class for Web API compatibility
+class Response {
+  constructor(body, options = {}) {
+    this.body = body;
+    this.status = options.status || 200;
+    this.headers = new Map(Object.entries(options.headers || {}));
+  }
+
+  async text() {
+    return typeof this.body === 'string' ? this.body : JSON.stringify(this.body);
+  }
+}
+
+// Load environment variables
+const env = process.env;
 
 // Configuration from environment variables
 const config = {
-  port: parseInt(Deno.env.get("PORT") || "8000"),
+  port: parseInt(env.PORT || "8000"),
   crayonConfig: {
-    clientId: Deno.env.get("CRAYON_CLIENT_ID") || "",
-    clientSecret: Deno.env.get("CRAYON_CLIENT_SECRET") || "",
-    tenantId: Deno.env.get("CRAYON_TENANT_ID") || "",
-    dynamicAuth: Deno.env.get("CRAYON_DYNAMIC_AUTH") === "true",
-    username: Deno.env.get("CRAYON_USERNAME") || "",
+    clientId: env.CRAYON_CLIENT_ID || "",
+    clientSecret: env.CRAYON_CLIENT_SECRET || "",
+    tenantId: env.CRAYON_TENANT_ID || "",
+    dynamicAuth: env.CRAYON_DYNAMIC_AUTH === "true",
+    username: env.CRAYON_USERNAME || "",
   },
   hostbillConfig: {
-    apiUrl: Deno.env.get("HOSTBILL_URL") || "",
-    apiId: Deno.env.get("HOSTBILL_API_ID") || "",
-    apiKey: Deno.env.get("HOSTBILL_API_KEY") || "",
+    apiUrl: env.HOSTBILL_URL || "",
+    apiId: env.HOSTBILL_API_ID || "",
+    apiKey: env.HOSTBILL_API_KEY || "",
   },
-  syncIntervalMinutes: parseInt(Deno.env.get("SYNC_INTERVAL_MINUTES") || "60"),
+  syncIntervalMinutes: parseInt(env.SYNC_INTERVAL_MINUTES || "60"),
+  genAiConfig: {
+    enabled: env.ENABLE_GENAI === "true",
+    apiKey: env.GENAI_API_KEY || "",
+    model: env.GENAI_MODEL || "gpt-4",
+  }
 };
 
 console.log("🚀 Starting Cloud-IQ Application");
@@ -31,6 +55,7 @@ console.log(`📊 Server will run on http://localhost:${config.port}`);
 
 // Initialize sync service for background operations
 let syncService = null;
+let genAiService = null;
 
 if (config.crayonConfig.clientId && config.hostbillConfig.apiUrl) {
   syncService = new CloudIQSyncService(config);
@@ -39,8 +64,13 @@ if (config.crayonConfig.clientId && config.hostbillConfig.apiUrl) {
 } else {
   console.log("⚠️  Sync service disabled - missing API configuration");
 }
+
+// Initialize GenAI service
+genAiService = new GenAIService(config);
+genAiService.initialize();
+
 // Simple HTTP server handler
-async function handler(request) {
+async function handleRequest(request) {
   const url = new URL(request.url);
   const { pathname, searchParams } = url;
 
@@ -85,29 +115,61 @@ async function handler(request) {
           );
         }
       }
-          return new Response(
-            JSON.stringify({ error: "Multi-agent crew not available" }),
-            { status: 503, headers }
-          );
-        }
+
+      // GenAI Agent API endpoints
+      if (pathname === "/api/agents/status") {
+        const agentStatus = genAiService.getAgentStatus();
+        return new Response(JSON.stringify(agentStatus), { headers });
       }
 
       if (pathname === "/api/agents/tasks" && request.method === "POST") {
-        } else {
+        try {
+          const taskData = await request.json();
+          const result = await genAiService.createTask(taskData);
+          return new Response(JSON.stringify(result), { headers });
+        } catch (error) {
           return new Response(
-            JSON.stringify({ error: "Multi-agent crew not available" }),
-            { status: 503, headers }
+            JSON.stringify({ error: error.message }),
+            { status: 500, headers }
           );
         }
       }
 
+      if (pathname === "/api/agents/tasks" && request.method === "GET") {
+        const tasks = genAiService.getAllTasks();
+        return new Response(JSON.stringify({ tasks }), { headers });
+      }
+
       if (pathname === "/api/agents/workflow" && request.method === "POST") {
-        } else {
+        try {
+          const workflowData = await request.json();
+          const result = await genAiService.processWorkflow(workflowData);
+          return new Response(JSON.stringify(result), { headers });
+        } catch (error) {
           return new Response(
-            JSON.stringify({ error: "Multi-agent crew not available" }),
-            { status: 503, headers }
+            JSON.stringify({ error: error.message }),
+            { status: 500, headers }
           );
         }
+      }
+
+      // GenAI Proxy API endpoints
+      if (pathname === "/api/genai/execute" && request.method === "POST") {
+        try {
+          const scriptData = await request.json();
+          const result = await genAiService.executeGenAIScript(scriptData);
+          return new Response(JSON.stringify(result), { headers });
+        } catch (error) {
+          return new Response(
+            JSON.stringify({ error: error.message }),
+            { status: 500, headers }
+          );
+        }
+      }
+
+      if (pathname === "/api/genai/models") {
+        const models = genAiService.getAvailableModels();
+        return new Response(JSON.stringify(models), { headers });
       }
 
       return new Response(
@@ -633,16 +695,77 @@ function shutdown() {
     syncService.cleanup();
     console.log("✅ Sync service cleaned up");
   }
-  Deno.exit(0);
+  if (genAiService) {
+    genAiService.cleanup();
+    console.log("✅ GenAI service cleaned up");
+  }
+  process.exit(0);
 }
 
 // Handle shutdown signals
-Deno.addSignalListener("SIGINT", shutdown);
-Deno.addSignalListener("SIGTERM", shutdown);
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);
 
-// Start the server
-const server = Deno.serve({ port: config.port }, handler);
-console.log(`✅ Cloud-IQ server running on http://localhost:${config.port}`);
+// Start the Node.js HTTP server
+const server = createServer(async (req, res) => {
+  try {
+    const response = await handleNodeRequest(req);
+    res.writeHead(response.status || 200, response.headers || {});
+    if (response.body) {
+      res.end(response.body);
+    } else {
+      res.end();
+    }
+  } catch (error) {
+    console.error("Server error:", error);
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: "Internal server error" }));
+  }
+});
+
+server.listen(config.port, () => {
+  console.log(`✅ Cloud-IQ server running on http://localhost:${config.port}`);
+});
+
+// Convert Node.js request to Web API compatible format
+async function handleNodeRequest(req) {
+  const url = `http://localhost:${config.port}${req.url}`;
+  
+  // Create a Web API compatible request object
+  const request = {
+    url,
+    method: req.method,
+    headers: req.headers,
+  };
+
+  // Get request body for POST requests
+  if (req.method === 'POST' || req.method === 'PUT') {
+    const chunks = [];
+    for await (const chunk of req) {
+      chunks.push(chunk);
+    }
+    const body = Buffer.concat(chunks).toString();
+    request.body = body;
+    request.json = () => Promise.resolve(body ? JSON.parse(body) : {});
+  } else {
+    request.json = () => Promise.resolve({});
+  }
+
+  // Call the main handler
+  const response = await handleRequest(request);
+  
+  // Convert Response to Node.js format
+  let body = "";
+  if (response.body) {
+    body = await response.text();
+  }
+  
+  return {
+    status: response.status || 200,
+    headers: Object.fromEntries(response.headers || []),
+    body
+  };
+}
 
 // Keep the process alive
 await server.finished;

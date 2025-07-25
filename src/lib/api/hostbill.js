@@ -1,5 +1,5 @@
 /**
- * HostBill API Client for Deno
+ * HostBill API Client for Node.js
  * Handles product/service management and billing integration
  * API Documentation: https://dev.hostbillapp.com/
  */
@@ -9,11 +9,11 @@
 
 
 export class HostBillAPIClient {
-  config: HostBillConfig;
-  cache = new Map<string, { data; timestamp }>();
+  config;
+  cache = new Map();
   cacheTimeout = 300000; // 5 minutes
 
-  constructor(config: HostBillConfig) {
+  constructor(config) {
     this.config = {
       ...config,
       apiUrl: config.apiUrl.replace(/\/$/, ''), // Remove trailing slash
@@ -23,7 +23,7 @@ export class HostBillAPIClient {
   /**
    * Make API request to HostBill
    */
-  async makeRequest(call, args: Record<string, any> = {}) {
+  async makeRequest(call, args = {}) {
     const postData = new URLSearchParams({
       call,
       api_id: this.config.apiId,
@@ -103,13 +103,7 @@ export class HostBillAPIClient {
   /**
    * Create a new product for CSP service
    */
-  async createProduct(productData: {
-    name;
-    price;
-    billingCycle;
-    description?;
-    category?;
-  }) {
+  async createProduct(productData) {
     const response = await this.makeRequest('addProduct', {
       name: productData.name,
       price: productData.price.toString(),
@@ -152,13 +146,7 @@ export class HostBillAPIClient {
   /**
    * Create new service order
    */
-  async createServiceOrder(orderData: {
-    clientId;
-    productId;
-    billingCycle;
-    quantity?;
-    customFields?: Record<string, any>;
-  }) {
+  async createServiceOrder(orderData) {
     const response = await this.makeRequest('addOrder', {
       client_id: orderData.clientId,
       product_id: orderData.productId,
@@ -173,7 +161,7 @@ export class HostBillAPIClient {
   /**
    * Update service status
    */
-  async updateServiceStatus(serviceId, status: 'active' | 'suspended' | 'cancelled') {
+  async updateServiceStatus(serviceId, status) {
     await this.makeRequest('changeServiceStatus', {
       service_id: serviceId,
       status,
@@ -183,15 +171,7 @@ export class HostBillAPIClient {
   /**
    * Create invoice for billing sync
    */
-  async createInvoice(invoiceData: {
-    clientId;
-    items: Array<{
-      description;
-      amount;
-      quantity?;
-    }>;
-    dueDate?;
-  }) {
+  async createInvoice(invoiceData) {
     const response = await this.makeRequest('addInvoice', {
       client_id: invoiceData.clientId,
       due_date: invoiceData.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],

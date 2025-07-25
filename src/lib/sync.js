@@ -53,7 +53,7 @@ export class CloudIQSyncService {
   async performFullSync() {
     console.log('Starting full synchronization...');
     
-    const result: SyncResult = {
+    const result = {
       success: true,
       message: '',
       syncedCount: 0,
@@ -114,7 +114,7 @@ export class CloudIQSyncService {
   /**
    * Sync active subscriptions from Crayon to HostBill
    */
-  async syncActiveSubscriptions(result: SyncResult) {
+  async syncActiveSubscriptions(result) {
     try {
       const subscriptions = await this.crayonClient.getActiveSubscriptions();
       console.log(`Found ${subscriptions.length} active subscriptions in Crayon`);
@@ -190,7 +190,7 @@ export class CloudIQSyncService {
   /**
    * Sync usage data and create invoices in HostBill
    */
-  async syncUsageData(result: SyncResult) {
+  async syncUsageData(result) {
     try {
       const syncRecords = this.db.getSyncRecords('synced');
       console.log(`Processing usage data for ${syncRecords.length} synced subscriptions`);
@@ -241,7 +241,7 @@ export class CloudIQSyncService {
                   });
 
                   // Mark usage records as synced
-                  this.db.markUsageSynced(unsyncedUsage.map((u) => u.id!));
+                  this.db.markUsageSynced(unsyncedUsage.map((u) => u.id));
                   
                   result.syncedCount++;
                   console.log(`Created invoice ${invoiceId} for usage charges: $${totalCost}`);
@@ -267,7 +267,7 @@ export class CloudIQSyncService {
   /**
    * Sync pending orders between systems
    */
-  async syncPendingOrders(result: SyncResult) {
+  async syncPendingOrders(result) {
     try {
       const pendingOrders = this.db.getOrderRecords('pending');
       console.log(`Processing ${pendingOrders.length} pending orders`);
@@ -313,7 +313,7 @@ export class CloudIQSyncService {
   /**
    * Process upcoming renewals
    */
-  async processUpcomingRenewals(result: SyncResult) {
+  async processUpcomingRenewals(result) {
     try {
       const upcomingRenewals = await this.crayonClient.getUpcomingRenewals(30);
       console.log(`Processing ${upcomingRenewals.length} upcoming renewals`);
@@ -350,12 +350,7 @@ export class CloudIQSyncService {
   /**
    * Create new order and sync to both systems
    */
-  async createOrder(orderData: {
-    customerId;
-    productId;
-    quantity;
-    billingCycle;
-  }) {
+  async createOrder(orderData) {
     try {
       // Create order in Crayon
       const crayonOrder = await this.crayonClient.createOrder(
@@ -384,14 +379,14 @@ export class CloudIQSyncService {
   /**
    * Get sync statistics
    */
-  getSyncStats(): Record<string, any> {
+  getSyncStats() {
     const dbStats = this.db.getStats();
     const syncRecords = this.db.getSyncRecords();
     
     const statusCounts = syncRecords.reduce((counts, record) => {
       counts[record.sync_status] = (counts[record.sync_status] || 0) + 1;
       return counts;
-    }, {} as Record<string, number>);
+    }, {});
 
     return {
       ...dbStats,

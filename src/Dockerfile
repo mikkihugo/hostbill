@@ -1,19 +1,28 @@
-FROM denoland/deno:2.3.0
+FROM node:20-alpine
 
 # Set working directory
 WORKDIR /app
 
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci --only=production
+
 # Copy application files
-COPY . .
+COPY src/ ./src/
 
-# Create data directory for SQLite database
+# Create data directory for database
 RUN mkdir -p /app/data
-
-# Cache dependencies
-RUN deno cache --reload main.js
 
 # Expose port
 EXPOSE 8000
 
+# Add non-root user
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S cloudiq -u 1001
+RUN chown -R cloudiq:nodejs /app
+USER cloudiq
+
 # Start command
-CMD ["run", "-A", "--env", "main.js"]
+CMD ["node", "src/main.js"]

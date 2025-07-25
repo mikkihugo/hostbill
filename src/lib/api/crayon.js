@@ -97,7 +97,7 @@ export class CrayonCloudIQClient {
   /**
    * Make authenticated API request
    */
-  async makeRequest(endpoint, options: RequestInit = {}) {
+  async makeRequest(endpoint, options = {}) {
     await this.authenticate();
 
     const url = `${this.config.apiUrl}${endpoint}`;
@@ -137,7 +137,7 @@ export class CrayonCloudIQClient {
   /**
    * Get subscription usage data for billing
    */
-  async getSubscriptionUsage(subscriptionId, fromDate?, toDate?) {
+  async getSubscriptionUsage(subscriptionId, fromDate, toDate) {
     let endpoint = `/subscriptions/${subscriptionId}/usage`;
     
     const params = new URLSearchParams();
@@ -154,7 +154,7 @@ export class CrayonCloudIQClient {
   /**
    * Create a new CSP order
    */
-  async createOrder(customerId, items: Array<{productId, quantity}>) {
+  async createOrder(customerId, items) {
     const orderData = {
       customerId,
       items: items.map(item => ({
@@ -180,7 +180,7 @@ export class CrayonCloudIQClient {
   /**
    * Update order status (approve/reject)
    */
-  async updateOrderStatus(orderId, status: 'approved' | 'rejected') {
+  async updateOrderStatus(orderId, status) {
     await this.makeRequest(`/orders/${orderId}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status }),
@@ -206,7 +206,7 @@ export class CrayonCloudIQClient {
   /**
    * Get products catalog for Office 365, Teams, etc.
    */
-  async getProductsCatalog(filter?) {
+  async getProductsCatalog(filter) {
     let endpoint = '/products';
     if (filter) {
       endpoint += `?filter=${encodeURIComponent(filter)}`;
