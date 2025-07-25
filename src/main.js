@@ -856,7 +856,7 @@ async function handleNodeRequest(req) {
   // Convert Response to Node.js format
   let body = "";
   if (response.body) {
-    body = await response.text();
+    body = typeof response.body === 'string' ? response.body : JSON.stringify(response.body);
   }
   
   return {
@@ -865,6 +865,3 @@ async function handleNodeRequest(req) {
     body
   };
 }
-
-// Keep the process alive
-await server.finished;
