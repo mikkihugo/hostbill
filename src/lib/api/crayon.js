@@ -52,11 +52,11 @@ export class CrayonCloudIQClient {
 
         const data = await response.json();
         this.accessToken = data.access_token;
-        this.tokenExpiry = now + data.expires_in * 1000;
+        this.tokenExpiry = now + (data.expires_in * 1000);
 
         console.log('✅ Dynamic authentication successful');
         return;
-      } catch (error) {
+      } catch {
         console.error('❌ Dynamic authentication failed, falling back to client credentials');
       }
     }
@@ -84,7 +84,7 @@ export class CrayonCloudIQClient {
 
       const data = await response.json();
       this.accessToken = data.access_token;
-      this.tokenExpiry = now + data.expires_in * 1000 - 300000; // 5 min buffer
+      this.tokenExpiry = now + (data.expires_in * 1000) - 300000; // 5 min buffer
     } catch (error) {
       throw new Error(`Failed to authenticate with Crayon API: ${error}`);
     }
@@ -110,7 +110,7 @@ export class CrayonCloudIQClient {
       throw new Error(`API request failed: ${response.status} - ${await response.text()}`);
     }
 
-    return await response.json();
+    return response.json();
   }
 
   /**
@@ -135,7 +135,7 @@ export class CrayonCloudIQClient {
   /**
    * Get subscription usage data for billing
    */
-  async getSubscriptionUsage(subscriptionId, fromDate, toDate) {
+  getSubscriptionUsage(subscriptionId, fromDate, toDate) {
     let endpoint = `/subscriptions/${subscriptionId}/usage`;
 
     const params = new URLSearchParams();
@@ -146,7 +146,7 @@ export class CrayonCloudIQClient {
       endpoint += `?${params.toString()}`;
     }
 
-    return await this.makeRequest(endpoint);
+    return this.makeRequest(endpoint);
   }
 
   /**
@@ -219,8 +219,8 @@ export class CrayonCloudIQClient {
   /**
    * Get customer information
    */
-  async getCustomer(customerId) {
-    return await this.makeRequest(`/customers/${customerId}`);
+  getCustomer(customerId) {
+    return this.makeRequest(`/customers/${customerId}`);
   }
 
   /**

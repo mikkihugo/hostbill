@@ -6,7 +6,7 @@
 
 // Import genaiscript modules
 let genAIScript = null;
-let genAICore = null;
+let _genAICore = null;
 
 export class GenAIService {
   constructor(config) {
@@ -31,17 +31,17 @@ export class GenAIService {
       try {
         const { createContext } = await import('@genaiscript/core');
         const { run } = await import('@genaiscript/api');
-        genAICore = { createContext };
+        _genAICore = { createContext };
         genAIScript = { run };
 
         console.log('✅ GenAI service initialized with Microsoft GenAI Script');
         this.isInitialized = true;
 
         // Initialize default agents
-        await this.initializeAgents();
+        this.initializeAgents();
 
         return true;
-      } catch (importError) {
+      } catch {
         console.log('⚠️  GenAI packages not installed, running in simulation mode');
         this.isInitialized = false;
         return true;
@@ -55,7 +55,7 @@ export class GenAIService {
   /**
    * Initialize default AI agents
    */
-  async initializeAgents() {
+  initializeAgents() {
     // Define default agents for HostBill/Crayon integration
     const defaultAgents = [
       {
@@ -108,12 +108,12 @@ export class GenAIService {
       enabled: true,
       agents: {
         total: this.agents.size,
-        active: Array.from(this.agents.values()).filter(a => a.status === 'active').length
+        active: Array.from(this.agents.values()).filter(agent => agent.status === 'active').length
       },
       tasks: {
         total: this.tasks.size,
-        pending: Array.from(this.tasks.values()).filter(t => t.status === 'pending').length,
-        completed: Array.from(this.tasks.values()).filter(t => t.status === 'completed').length
+        pending: Array.from(this.tasks.values()).filter(task => task.status === 'pending').length,
+        completed: Array.from(this.tasks.values()).filter(task => task.status === 'completed').length
       },
       mcpServers: {
         active: 1 // Placeholder for MCP server count
@@ -124,7 +124,7 @@ export class GenAIService {
   /**
    * Create a new task
    */
-  async createTask(taskData) {
+  createTask(taskData) {
     if (!this.isEnabled) {
       throw new Error('GenAI service is disabled');
     }
@@ -262,7 +262,7 @@ Please analyze the request and provide appropriate assistance based on the conte
   /**
    * Process workflow
    */
-  async processWorkflow(workflowData) {
+  processWorkflow(workflowData) {
     if (!this.isEnabled) {
       throw new Error('GenAI service is disabled');
     }
@@ -414,13 +414,6 @@ Please process this step and provide the output that can be used for subsequent 
       ],
       default: this.config.genAiConfig?.model || 'gpt-4'
     };
-  }
-
-  /**
-   * Get task status
-   */
-  getTask(taskId) {
-    return this.tasks.get(taskId) || null;
   }
 
   /**

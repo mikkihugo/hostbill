@@ -3,8 +3,6 @@
  * Implements rate limiting, input validation, and security headers
  */
 
-import { readFileSync } from 'node:fs';
-
 /**
  * Rate limiter implementation
  */
@@ -328,7 +326,7 @@ export const healthCheck = {
   /**
    * Check database connectivity
    */
-  async checkDatabase(db) {
+  checkDatabase(db) {
     try {
       db.getStats(); // Simple operation to test database
       return { status: 'healthy', message: 'Database accessible' };
@@ -394,7 +392,7 @@ export const healthCheck = {
     report.checks.system = this.checkSystemHealth();
 
     // Database health
-    report.checks.database = await this.checkDatabase(db);
+    report.checks.database = this.checkDatabase(db);
 
     // External APIs health
     const apiChecks = await this.checkExternalAPIs(crayonClient, hostbillClient);

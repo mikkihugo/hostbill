@@ -10,7 +10,7 @@ import { CloudIQSyncService } from './lib/sync.js';
 import { GenAIService } from './lib/genai.js';
 import { getConfig } from './lib/config.js';
 import { createSecurityMiddleware, healthCheck } from './lib/security.js';
-import { logger, requestLogger, errorTracker } from './lib/logger.js';
+import { logger, requestLogger } from './lib/logger.js';
 import { createServer } from 'node:http';
 
 // Simple Response class for Web API compatibility
@@ -21,7 +21,7 @@ class Response {
     this.headers = new Map(Object.entries(options.headers || {}));
   }
 
-  async text() {
+  text() {
     return typeof this.body === 'string' ? this.body : JSON.stringify(this.body);
   }
 }

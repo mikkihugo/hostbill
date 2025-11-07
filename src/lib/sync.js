@@ -130,9 +130,9 @@ export class CloudIQSyncService {
           // Check if product exists in HostBill
           const products = await this.hostbillClient.getProducts();
           let hostbillProduct = products.find(
-            p =>
-              p.name.toLowerCase().includes(subscription.productName.toLowerCase()) ||
-              p.name.includes(subscription.subscriptionId)
+            product =>
+              product.name.toLowerCase().includes(subscription.productName.toLowerCase()) ||
+              product.name.includes(subscription.subscriptionId)
           );
 
           // Create product if it doesn't exist
@@ -202,60 +202,7 @@ export class CloudIQSyncService {
 
       for (const syncRecord of syncRecords) {
         try {
-          // Get usage data from Crayon
-          const usageData = await this.crayonClient.getSubscriptionUsage(
-            syncRecord.crayon_subscription_id,
-            new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days ago
-            new Date().toISOString().split('T')[0] // Today
-          );
-
-          if (usageData && usageData.usage) {
-            // Store usage records
-            for (const usage of usageData.usage) {
-              this.db.addUsageRecord({
-                subscription_id: syncRecord.crayon_subscription_id,
-                usage_date: usage.date,
-                quantity_used: usage.quantity,
-                cost: usage.cost,
-                billing_period: usage.period || 'monthly',
-                synced_to_hostbill: false
-              });
-            }
-
-            // Get unsynced usage records for this subscription
-            const unsyncedUsage = this.db.getUsageRecords(syncRecord.crayon_subscription_id, true);
-
-            if (unsyncedUsage.length > 0) {
-              // Calculate total cost
-              const totalCost = unsyncedUsage.reduce((sum, usage) => sum + usage.cost, 0);
-
-              if (totalCost > 0) {
-                // Find client for this service
-                const services = await this.hostbillClient.getClientServices(''); // This needs proper client lookup
-                const service = services.find(s => s.id === syncRecord.hostbill_service_id);
-
-                if (service) {
-                  // Create invoice in HostBill
-                  const invoiceId = await this.hostbillClient.createInvoice({
-                    clientId: service.clientId,
-                    items: [
-                      {
-                        description: `${syncRecord.product_name} usage charges`,
-                        amount: totalCost,
-                        quantity: 1
-                      }
-                    ]
-                  });
-
-                  // Mark usage records as synced
-                  this.db.markUsageSynced(unsyncedUsage.map(u => u.id));
-
-                  result.syncedCount++;
-                  console.log(`Created invoice ${invoiceId} for usage charges: $${totalCost}`);
-                }
-              }
-            }
-          }
+          await this.processSubscriptionUsage(syncRecord, result);
         } catch (error) {
           result.errorCount++;
           const errorMsg = `Failed to sync usage for ${syncRecord.crayon_subscription_id}: ${error}`;
@@ -267,6 +214,79 @@ export class CloudIQSyncService {
       result.errorCount++;
       result.errors.push(`Failed to sync usage data: ${error}`);
     }
+  }
+
+  /**
+   * Process usage data for a single subscription
+   */
+  async processSubscriptionUsage(syncRecord, result) {
+    // Get usage data from Crayon
+    const usageData = await this.crayonClient.getSubscriptionUsage(
+      syncRecord.crayon_subscription_id,
+      new Date(Date.now() - (30 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0], // 30 days ago
+      new Date().toISOString().split('T')[0] // Today
+    );
+
+    if (!usageData || !usageData.usage) {
+      return;
+    }
+
+    // Store usage records
+    for (const usage of usageData.usage) {
+      this.db.addUsageRecord({
+        subscription_id: syncRecord.crayon_subscription_id,
+        usage_date: usage.date,
+        quantity_used: usage.quantity,
+        cost: usage.cost,
+        billing_period: usage.period || 'monthly',
+        synced_to_hostbill: false
+      });
+    }
+
+    // Process any unsynced usage records
+    const unsyncedUsage = this.db.getUsageRecords(syncRecord.crayon_subscription_id, true);
+    if (unsyncedUsage.length > 0) {
+      await this.createInvoiceForUsage(syncRecord, unsyncedUsage, result);
+    }
+  }
+
+  /**
+   * Create invoice for unsynced usage records
+   */
+  async createInvoiceForUsage(syncRecord, unsyncedUsage, result) {
+    const totalCost = unsyncedUsage.reduce((sum, usage) => sum + usage.cost, 0);
+
+    if (totalCost <= 0) {
+      return;
+    }
+
+    // Find client for this service
+    const services = await this.hostbillClient.getClientServices(''); // This needs proper client lookup
+    const service = services.find(
+      clientService => clientService.id === syncRecord.hostbill_service_id
+    );
+
+    if (!service) {
+      return;
+    }
+
+    // Create invoice in HostBill
+    const invoiceId = await this.hostbillClient.createInvoice({
+      clientId: service.clientId,
+      items: [
+        {
+          description: `${syncRecord.product_name} usage charges`,
+          amount: totalCost,
+          quantity: 1
+        }
+      ]
+    });
+
+    // Mark usage records as synced
+    this.db.markUsageSynced(unsyncedUsage.map(usage => usage.id));
+
+    result.syncedCount++;
+    console.log(`Created invoice ${invoiceId} for usage charges: $${totalCost}`);
   }
 
   /**
@@ -326,7 +346,7 @@ export class CloudIQSyncService {
           // Find corresponding HostBill service
           const syncRecord = this.db
             .getSyncRecords()
-            .find(r => r.crayon_subscription_id === renewal.subscriptionId);
+            .find(syncItem => syncItem.crayon_subscription_id === renewal.subscriptionId);
 
           if (syncRecord) {
             // Update service in HostBill with renewal information
@@ -361,7 +381,7 @@ export class CloudIQSyncService {
         customer_id: orderData.customerId,
         status: 'pending',
         total_amount: crayonOrder.subscriptions.reduce(
-          (sum, sub) => sum + sub.quantity * sub.unitPrice,
+          (sum, sub) => sum + (sub.quantity * sub.unitPrice),
           0
         ),
         order_data: JSON.stringify(orderData)

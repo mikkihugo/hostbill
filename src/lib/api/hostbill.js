@@ -175,7 +175,7 @@ export class HostBillAPIClient {
       client_id: invoiceData.clientId,
       due_date:
         invoiceData.dueDate ||
-        new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        new Date(Date.now() + (30 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0],
       items: JSON.stringify(
         invoiceData.items.map(item => ({
           description: item.description,
@@ -230,8 +230,8 @@ export class HostBillAPIClient {
   /**
    * Get server information
    */
-  async getServerInfo() {
-    return await this.makeRequest('getServerInfo');
+  getServerInfo() {
+    return this.makeRequest('getServerInfo');
   }
 
   /**
