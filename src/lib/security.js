@@ -22,22 +22,22 @@ class RateLimiter {
   isAllowed(clientId) {
     const now = Date.now();
     const windowStart = now - this.windowMs;
-    
+
     if (!this.requests.has(clientId)) {
       this.requests.set(clientId, []);
     }
-    
+
     const clientRequests = this.requests.get(clientId);
-    
+
     // Remove old requests outside the window
     while (clientRequests.length > 0 && clientRequests[0] < windowStart) {
       clientRequests.shift();
     }
-    
+
     if (clientRequests.length >= this.maxRequests) {
       return false;
     }
-    
+
     clientRequests.push(now);
     return true;
   }
@@ -49,9 +49,9 @@ class RateLimiter {
     const now = Date.now();
     const windowStart = now - this.windowMs;
     const clientRequests = this.requests.get(clientId) || [];
-    
+
     const validRequests = clientRequests.filter(time => time > windowStart);
-    
+
     return {
       limit: this.maxRequests,
       remaining: Math.max(0, this.maxRequests - validRequests.length),
@@ -66,10 +66,10 @@ class RateLimiter {
   cleanup() {
     const now = Date.now();
     const windowStart = now - this.windowMs;
-    
+
     for (const [clientId, requests] of this.requests.entries()) {
       const validRequests = requests.filter(time => time > windowStart);
-      
+
       if (validRequests.length === 0) {
         this.requests.delete(clientId);
       } else {
@@ -100,7 +100,7 @@ export const validator = {
     if (typeof input !== 'string') {
       return '';
     }
-    
+
     return input
       .trim()
       .substring(0, maxLength)
@@ -137,24 +137,24 @@ export const validator = {
    */
   validateJSON(data, schema = {}) {
     const errors = [];
-    
+
     for (const [key, rules] of Object.entries(schema)) {
       if (rules.required && !(key in data)) {
         errors.push(`Missing required field: ${key}`);
         continue;
       }
-      
+
       if (key in data) {
         const value = data[key];
-        
+
         if (rules.type && typeof value !== rules.type) {
           errors.push(`Field ${key} must be of type ${rules.type}`);
         }
-        
+
         if (rules.type === 'string' && rules.maxLength && value.length > rules.maxLength) {
           errors.push(`Field ${key} exceeds maximum length of ${rules.maxLength}`);
         }
-        
+
         if (rules.type === 'number' && (rules.min !== undefined || rules.max !== undefined)) {
           if (rules.min !== undefined && value < rules.min) {
             errors.push(`Field ${key} must be at least ${rules.min}`);
@@ -163,17 +163,17 @@ export const validator = {
             errors.push(`Field ${key} must be no more than ${rules.max}`);
           }
         }
-        
+
         if (rules.enum && !rules.enum.includes(value)) {
           errors.push(`Field ${key} must be one of: ${rules.enum.join(', ')}`);
         }
       }
     }
-    
+
     if (errors.length > 0) {
       throw new Error(`Validation failed: ${errors.join('; ')}`);
     }
-    
+
     return data;
   }
 };
@@ -183,28 +183,31 @@ export const validator = {
  */
 export function createSecurityMiddleware(config) {
   const rateLimiter = new RateLimiter(config.security.rateLimit);
-  
+
   return {
     rateLimiter,
-    
+
     /**
      * Apply security headers to response
      */
     applySecurityHeaders(response) {
       const headers = response.headers || new Map();
-      
+
       // Security headers
       headers.set('X-Content-Type-Options', 'nosniff');
       headers.set('X-Frame-Options', 'DENY');
       headers.set('X-XSS-Protection', '1; mode=block');
       headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-      headers.set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' cdn.tailwindcss.com unpkg.com; style-src 'self' 'unsafe-inline' cdn.tailwindcss.com; img-src 'self' data:; connect-src 'self'");
-      
+      headers.set(
+        'Content-Security-Policy',
+        "default-src 'self'; script-src 'self' 'unsafe-inline' cdn.tailwindcss.com unpkg.com; style-src 'self' 'unsafe-inline' cdn.tailwindcss.com; img-src 'self' data:; connect-src 'self'"
+      );
+
       // HSTS for HTTPS
       if (config.server.nodeEnv === 'production') {
         headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
       }
-      
+
       return { ...response, headers };
     },
 
@@ -213,10 +216,10 @@ export function createSecurityMiddleware(config) {
      */
     applyRateLimit(request) {
       const clientId = this.getClientId(request);
-      
+
       if (!rateLimiter.isAllowed(clientId)) {
         const limitInfo = rateLimiter.getLimitInfo(clientId);
-        
+
         return {
           status: 429,
           headers: {
@@ -252,11 +255,9 @@ export function createSecurityMiddleware(config) {
       if (config.server.trustProxy && request.headers['x-forwarded-for']) {
         return request.headers['x-forwarded-for'].split(',')[0].trim();
       }
-      
+
       // Fallback to connection remote address
-      return request.connection?.remoteAddress || 
-             request.socket?.remoteAddress || 
-             'unknown';
+      return request.connection?.remoteAddress || request.socket?.remoteAddress || 'unknown';
     },
 
     /**
@@ -265,18 +266,18 @@ export function createSecurityMiddleware(config) {
     validateRequest(request, endpoint) {
       const schemas = this.getValidationSchemas();
       const schema = schemas[endpoint];
-      
+
       if (!schema) {
         return request; // No validation required
       }
-      
+
       try {
         if (request.method === 'POST' || request.method === 'PUT') {
           // Validate JSON body
           const body = typeof request.body === 'string' ? JSON.parse(request.body) : request.body;
           validator.validateJSON(body, schema);
         }
-        
+
         return request;
       } catch (error) {
         throw new Error(`Request validation failed: ${error.message}`);
@@ -290,7 +291,11 @@ export function createSecurityMiddleware(config) {
       return {
         '/api/sync/manual': {},
         '/api/agents/tasks': {
-          type: { type: 'string', required: true, enum: ['analysis', 'billing-review', 'customer-support', 'sync-monitoring'] },
+          type: {
+            type: 'string',
+            required: true,
+            enum: ['analysis', 'billing-review', 'customer-support', 'sync-monitoring']
+          },
           priority: { type: 'string', required: false, enum: ['low', 'medium', 'high', 'urgent'] },
           payload: { type: 'object', required: false }
         },
@@ -337,21 +342,21 @@ export const healthCheck = {
    */
   async checkExternalAPIs(crayonClient, hostbillClient) {
     const checks = {};
-    
+
     try {
       await crayonClient.authenticate();
       checks.crayon = { status: 'healthy', message: 'Crayon API accessible' };
     } catch (error) {
       checks.crayon = { status: 'unhealthy', message: `Crayon API error: ${error.message}` };
     }
-    
+
     try {
       await hostbillClient.testConnection();
       checks.hostbill = { status: 'healthy', message: 'HostBill API accessible' };
     } catch (error) {
       checks.hostbill = { status: 'unhealthy', message: `HostBill API error: ${error.message}` };
     }
-    
+
     return checks;
   },
 
@@ -361,7 +366,7 @@ export const healthCheck = {
   checkSystemHealth() {
     const memUsage = process.memoryUsage();
     const uptime = process.uptime();
-    
+
     return {
       status: 'healthy',
       uptime: Math.floor(uptime),
@@ -384,23 +389,25 @@ export const healthCheck = {
       status: 'healthy',
       checks: {}
     };
-    
+
     // System health
     report.checks.system = this.checkSystemHealth();
-    
+
     // Database health
     report.checks.database = await this.checkDatabase(db);
-    
+
     // External APIs health
     const apiChecks = await this.checkExternalAPIs(crayonClient, hostbillClient);
     report.checks = { ...report.checks, ...apiChecks };
-    
+
     // Overall status
-    const unhealthyChecks = Object.values(report.checks).filter(check => check.status === 'unhealthy');
+    const unhealthyChecks = Object.values(report.checks).filter(
+      check => check.status === 'unhealthy'
+    );
     if (unhealthyChecks.length > 0) {
       report.status = 'unhealthy';
     }
-    
+
     return report;
   }
 };

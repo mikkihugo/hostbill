@@ -4,7 +4,7 @@ services:
   cloud-iq:
     build: .
     ports:
-      - "8000:8000"
+      - '8000:8000'
     environment:
       - CRAYON_CLIENT_ID=${CRAYON_CLIENT_ID}
       - CRAYON_CLIENT_SECRET=${CRAYON_CLIENT_SECRET}
@@ -19,7 +19,7 @@ services:
       - cloud_iq_data:/app/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:8000/']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -35,7 +35,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
     ports:
-      - "5432:5432"
+      - '5432:5432'
 
 volumes:
   cloud_iq_data:

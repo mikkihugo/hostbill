@@ -15,9 +15,5 @@
   "imports": {
     "$std/": "https://deno.land/std@0.230.0/"
   },
-  "exclude": [
-    "data/",
-    "*.db",
-    "*.json"
-  ]
+  "exclude": ["data/", "*.db", "*.json"]
 }

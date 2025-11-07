@@ -6,11 +6,11 @@
  * With Microsoft GenAI agent support and enhanced security
  */
 
-import { CloudIQSyncService } from "./lib/sync.js";
-import { GenAIService } from "./lib/genai.js";
-import { getConfig } from "./lib/config.js";
-import { createSecurityMiddleware, healthCheck } from "./lib/security.js";
-import { logger, requestLogger, errorTracker } from "./lib/logger.js";
+import { CloudIQSyncService } from './lib/sync.js';
+import { GenAIService } from './lib/genai.js';
+import { getConfig } from './lib/config.js';
+import { createSecurityMiddleware, healthCheck } from './lib/security.js';
+import { logger, requestLogger, errorTracker } from './lib/logger.js';
 import { createServer } from 'node:http';
 
 // Simple Response class for Web API compatibility
@@ -29,7 +29,7 @@ class Response {
 // Get validated configuration
 const config = getConfig();
 
-logger.info("🚀 Starting Cloud-IQ Application", {
+logger.info('🚀 Starting Cloud-IQ Application', {
   nodeEnv: config.server.nodeEnv,
   port: config.server.port
 });
@@ -49,9 +49,9 @@ if (config.crayon.clientId && config.hostbill.apiUrl) {
     dbPath: config.sync.databasePath
   });
   syncService.startPeriodicSync();
-  logger.info("✅ Background sync service started");
+  logger.info('✅ Background sync service started');
 } else {
-  logger.warn("⚠️  Sync service disabled - missing API configuration");
+  logger.warn('⚠️  Sync service disabled - missing API configuration');
 }
 
 // Initialize GenAI service
@@ -64,7 +64,7 @@ genAiService.initialize();
 async function handleRequest(request) {
   const startTime = requestLogger.logRequest(request);
   let response;
-  
+
   try {
     const url = new URL(request.url);
     const { pathname } = url;
@@ -78,50 +78,49 @@ async function handleRequest(request) {
 
     // CORS headers for API requests
     const corsHeaders = {
-      "Access-Control-Allow-Origin": config.security.cors.origin,
-      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      'Access-Control-Allow-Origin': config.security.cors.origin,
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       ...rateLimitResponse.headers
     };
 
     // Handle preflight requests
-    if (request.method === "OPTIONS") {
+    if (request.method === 'OPTIONS') {
       response = new Response(null, { status: 200, headers: corsHeaders });
       return security.applySecurityHeaders(response);
     }
 
     // Health check endpoint
-    if (pathname === "/health") {
+    if (pathname === '/health') {
       const healthReport = await healthCheck.generateHealthReport(
         syncService?.db,
         syncService?.crayonClient,
         syncService?.hostbillClient
       );
       response = new Response(JSON.stringify(healthReport), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
       return security.applySecurityHeaders(response);
     }
 
     // API Routes with validation
-    if (pathname.startsWith("/api/")) {
+    if (pathname.startsWith('/api/')) {
       try {
         // Validate request
         security.validateRequest(request, pathname);
-        
-        const headers = { ...corsHeaders, "Content-Type": "application/json" };
+
+        const headers = { ...corsHeaders, 'Content-Type': 'application/json' };
         response = await handleApiRequest(pathname, request, headers);
-        
       } catch (validationError) {
-        logger.warn("Request validation failed", {
+        logger.warn('Request validation failed', {
           url: pathname,
           error: validationError.message
         });
-        
+
         response = new Response(
-          JSON.stringify({ 
-            error: "Validation Error", 
-            message: validationError.message 
+          JSON.stringify({
+            error: 'Validation Error',
+            message: validationError.message
           }),
           { status: 400, headers: corsHeaders }
         );
@@ -130,24 +129,24 @@ async function handleRequest(request) {
       // Static HTML pages
       response = serveStaticPage(pathname);
     }
-
   } catch (error) {
-    logger.error("Request handling error", {
+    logger.error('Request handling error', {
       url: request.url,
       error: error.message,
       stack: error.stack
     });
-    
+
     response = new Response(
-      JSON.stringify({ 
-        error: "Internal Server Error",
-        message: config.server.nodeEnv === 'production' ? 
-          'An error occurred while processing your request' : 
-          error.message
+      JSON.stringify({
+        error: 'Internal Server Error',
+        message:
+          config.server.nodeEnv === 'production'
+            ? 'An error occurred while processing your request'
+            : error.message
       }),
-      { 
+      {
         status: 500,
-        headers: { "Content-Type": "application/json" }
+        headers: { 'Content-Type': 'application/json' }
       }
     );
   } finally {
@@ -161,90 +160,81 @@ async function handleRequest(request) {
 // Handle API requests
 async function handleApiRequest(pathname, request, headers) {
   // Sync API endpoints
-  if (pathname === "/api/sync/manual" && request.method === "POST") {
+  if (pathname === '/api/sync/manual' && request.method === 'POST') {
     if (syncService) {
       const result = await syncService.performFullSync();
       return new Response(JSON.stringify(result), { headers });
     } else {
-      return new Response(
-        JSON.stringify({ error: "Sync service not available" }),
-        { status: 503, headers }
-      );
+      return new Response(JSON.stringify({ error: 'Sync service not available' }), {
+        status: 503,
+        headers
+      });
     }
   }
 
-  if (pathname === "/api/sync/stats") {
+  if (pathname === '/api/sync/stats') {
     if (syncService) {
       const stats = syncService.getSyncStats();
       return new Response(JSON.stringify(stats), { headers });
     } else {
-      return new Response(
-        JSON.stringify({ error: "Sync service not available" }),
-        { status: 503, headers }
-      );
+      return new Response(JSON.stringify({ error: 'Sync service not available' }), {
+        status: 503,
+        headers
+      });
     }
   }
 
   // GenAI Agent API endpoints
-  if (pathname === "/api/agents/status") {
+  if (pathname === '/api/agents/status') {
     const agentStatus = genAiService.getAgentStatus();
     return new Response(JSON.stringify(agentStatus), { headers });
   }
 
-  if (pathname === "/api/agents/tasks" && request.method === "POST") {
+  if (pathname === '/api/agents/tasks' && request.method === 'POST') {
     try {
       const taskData = await request.json();
       const result = await genAiService.createTask(taskData);
       return new Response(JSON.stringify(result), { headers });
     } catch (error) {
-      return new Response(
-        JSON.stringify({ error: error.message }),
-        { status: 500, headers }
-      );
+      return new Response(JSON.stringify({ error: error.message }), { status: 500, headers });
     }
   }
 
-  if (pathname === "/api/agents/tasks" && request.method === "GET") {
+  if (pathname === '/api/agents/tasks' && request.method === 'GET') {
     const tasks = genAiService.getAllTasks();
     return new Response(JSON.stringify({ tasks }), { headers });
   }
 
-  if (pathname === "/api/agents/workflow" && request.method === "POST") {
+  if (pathname === '/api/agents/workflow' && request.method === 'POST') {
     try {
       const workflowData = await request.json();
       const result = await genAiService.processWorkflow(workflowData);
       return new Response(JSON.stringify(result), { headers });
     } catch (error) {
-      return new Response(
-        JSON.stringify({ error: error.message }),
-        { status: 500, headers }
-      );
+      return new Response(JSON.stringify({ error: error.message }), { status: 500, headers });
     }
   }
 
   // GenAI Proxy API endpoints
-  if (pathname === "/api/genai/execute" && request.method === "POST") {
+  if (pathname === '/api/genai/execute' && request.method === 'POST') {
     try {
       const scriptData = await request.json();
       const result = await genAiService.executeGenAIScript(scriptData);
       return new Response(JSON.stringify(result), { headers });
     } catch (error) {
-      return new Response(
-        JSON.stringify({ error: error.message }),
-        { status: 500, headers }
-      );
+      return new Response(JSON.stringify({ error: error.message }), { status: 500, headers });
     }
   }
 
-  if (pathname === "/api/genai/models") {
+  if (pathname === '/api/genai/models') {
     const models = genAiService.getAvailableModels();
     return new Response(JSON.stringify(models), { headers });
   }
 
-  return new Response(
-    JSON.stringify({ error: "API endpoint not found" }),
-    { status: 404, headers }
-  );
+  return new Response(JSON.stringify({ error: 'API endpoint not found' }), {
+    status: 404,
+    headers
+  });
 }
 
 function serveStaticPage(pathname) {
@@ -566,13 +556,13 @@ function serveStaticPage(pathname) {
 </html>`;
 
   return new Response(html, {
-    headers: { "Content-Type": "text/html; charset=utf-8" }
+    headers: { 'Content-Type': 'text/html; charset=utf-8' }
   });
 }
 
 function getPageContent(pathname) {
   switch (pathname) {
-    case "/":
+    case '/':
       return `
         <div class="px-4 py-6 sm:px-0">
             <div class="glass-effect rounded-2xl p-8 border border-white/20">
@@ -650,7 +640,7 @@ function getPageContent(pathname) {
         </div>
       `;
 
-    case "/orders":
+    case '/orders':
       return `
         <div class="px-4 py-6 sm:px-0">
             <div class="glass-effect rounded-2xl p-8 border border-white/20">
@@ -681,7 +671,7 @@ function getPageContent(pathname) {
         </div>
       `;
 
-    case "/sync":
+    case '/sync':
       return `
         <div class="px-4 py-6 sm:px-0">
             <div class="glass-effect rounded-2xl p-8 border border-white/20">
@@ -745,74 +735,74 @@ function getPageContent(pathname) {
 // Graceful shutdown handler
 function shutdown(signal) {
   logger.info(`🛑 Received ${signal}, shutting down Cloud-IQ application gracefully...`);
-  
+
   // Stop accepting new connections
   server.close(() => {
-    logger.info("✅ HTTP server closed");
+    logger.info('✅ HTTP server closed');
   });
-  
+
   // Cleanup services
   if (syncService) {
     syncService.cleanup();
-    logger.info("✅ Sync service cleaned up");
+    logger.info('✅ Sync service cleaned up');
   }
-  
+
   if (genAiService) {
     genAiService.cleanup();
-    logger.info("✅ GenAI service cleaned up");
+    logger.info('✅ GenAI service cleaned up');
   }
-  
+
   if (security) {
     security.destroy();
-    logger.info("✅ Security middleware cleaned up");
+    logger.info('✅ Security middleware cleaned up');
   }
-  
+
   // Force exit after timeout
   setTimeout(() => {
-    logger.error("❌ Forced shutdown due to timeout");
+    logger.error('❌ Forced shutdown due to timeout');
     process.exit(1);
   }, 10000);
 }
 
 // Handle shutdown signals
-process.on("SIGINT", () => shutdown("SIGINT"));
-process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
 
 // Start the Node.js HTTP server
 const server = createServer(async (req, res) => {
   try {
     const response = await handleNodeRequest(req);
-    
+
     // Set headers
     Object.entries(response.headers || {}).forEach(([key, value]) => {
       res.setHeader(key, value);
     });
-    
+
     res.writeHead(response.status || 200);
-    
+
     if (response.body) {
       res.end(response.body);
     } else {
       res.end();
     }
   } catch (error) {
-    logger.error("Server error", {
+    logger.error('Server error', {
       error: error.message,
       stack: error.stack
     });
-    
+
     res.writeHead(500, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: "Internal server error" }));
+    res.end(JSON.stringify({ error: 'Internal server error' }));
   }
 });
 
 // Handle server errors
-server.on('error', (error) => {
-  logger.error("Server error", {
+server.on('error', error => {
+  logger.error('Server error', {
     error: error.message,
     code: error.code
   });
-  
+
   if (error.code === 'EADDRINUSE') {
     logger.error(`Port ${config.server.port} is already in use`);
     process.exit(1);
@@ -829,12 +819,12 @@ server.listen(config.server.port, () => {
 // Convert Node.js request to Web API compatible format
 async function handleNodeRequest(req) {
   const url = `http://localhost:${config.server.port}${req.url}`;
-  
+
   // Create a Web API compatible request object
   const request = {
     url,
     method: req.method,
-    headers: req.headers,
+    headers: req.headers
   };
 
   // Get request body for POST requests
@@ -852,13 +842,13 @@ async function handleNodeRequest(req) {
 
   // Call the main handler
   const response = await handleRequest(request);
-  
+
   // Convert Response to Node.js format
-  let body = "";
+  let body = '';
   if (response.body) {
     body = typeof response.body === 'string' ? response.body : JSON.stringify(response.body);
   }
-  
+
   return {
     status: response.status || 200,
     headers: Object.fromEntries(response.headers || []),

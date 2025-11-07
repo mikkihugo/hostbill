@@ -22,7 +22,7 @@ export class GenAIService {
    */
   async initialize() {
     if (!this.isEnabled) {
-      console.log("⚠️  GenAI service disabled - set ENABLE_GENAI=true to enable");
+      console.log('⚠️  GenAI service disabled - set ENABLE_GENAI=true to enable');
       return false;
     }
 
@@ -33,21 +33,21 @@ export class GenAIService {
         const { run } = await import('@genaiscript/api');
         genAICore = { createContext };
         genAIScript = { run };
-        
-        console.log("✅ GenAI service initialized with Microsoft GenAI Script");
+
+        console.log('✅ GenAI service initialized with Microsoft GenAI Script');
         this.isInitialized = true;
-        
+
         // Initialize default agents
         await this.initializeAgents();
-        
+
         return true;
       } catch (importError) {
-        console.log("⚠️  GenAI packages not installed, running in simulation mode");
+        console.log('⚠️  GenAI packages not installed, running in simulation mode');
         this.isInitialized = false;
         return true;
       }
     } catch (error) {
-      console.error("Failed to initialize GenAI service:", error);
+      console.error('Failed to initialize GenAI service:', error);
       return false;
     }
   }
@@ -67,7 +67,7 @@ export class GenAIService {
       },
       {
         id: 'customer-support',
-        name: 'Customer Support Assistant', 
+        name: 'Customer Support Assistant',
         description: 'Assists with customer inquiries and support tasks',
         type: 'support',
         capabilities: ['customer-service', 'issue-resolution', 'documentation']
@@ -100,7 +100,7 @@ export class GenAIService {
     if (!this.isEnabled) {
       return {
         enabled: false,
-        message: "GenAI service is disabled. Set ENABLE_GENAI=true to enable."
+        message: 'GenAI service is disabled. Set ENABLE_GENAI=true to enable.'
       };
     }
 
@@ -126,7 +126,7 @@ export class GenAIService {
    */
   async createTask(taskData) {
     if (!this.isEnabled) {
-      throw new Error("GenAI service is disabled");
+      throw new Error('GenAI service is disabled');
     }
 
     const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -141,7 +141,7 @@ export class GenAIService {
     };
 
     this.tasks.set(taskId, task);
-    
+
     // Process task with GenAI Script if available
     if (this.isInitialized && genAIScript) {
       this.processTaskWithGenAI(task);
@@ -164,7 +164,7 @@ export class GenAIService {
   async processTaskWithGenAI(task) {
     try {
       const prompt = this.generatePromptForTask(task);
-      
+
       // Use GenAI Script to process the task
       const result = await genAIScript.run(prompt, {
         model: this.config.genAiConfig?.model || 'gpt-4',
@@ -184,7 +184,6 @@ export class GenAIService {
         agent.taskCount++;
         this.agents.set(agentId, agent);
       }
-
     } catch (error) {
       console.error(`Failed to process task ${task.id} with GenAI:`, error);
       task.status = 'failed';
@@ -199,7 +198,7 @@ export class GenAIService {
    */
   generatePromptForTask(task) {
     const { type, payload } = task;
-    
+
     switch (type) {
       case 'analysis':
         return `Analyze the following data and provide insights: ${JSON.stringify(payload, null, 2)}
@@ -246,7 +245,7 @@ Please analyze the request and provide appropriate assistance based on the conte
    */
   selectAgentForTask(task) {
     const { type } = task;
-    
+
     switch (type) {
       case 'analysis':
       case 'billing-review':
@@ -265,11 +264,11 @@ Please analyze the request and provide appropriate assistance based on the conte
    */
   async processWorkflow(workflowData) {
     if (!this.isEnabled) {
-      throw new Error("GenAI service is disabled");
+      throw new Error('GenAI service is disabled');
     }
 
     const workflowId = `workflow_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+
     // Create workflow definition
     const workflow = {
       id: workflowId,
@@ -307,7 +306,7 @@ Please analyze the request and provide appropriate assistance based on the conte
     try {
       for (let i = 0; i < workflow.steps.length; i++) {
         const step = workflow.steps[i];
-        
+
         // Generate prompt for this workflow step
         const prompt = `Execute the following workflow step:
         
@@ -333,7 +332,6 @@ Please process this step and provide the output that can be used for subsequent 
       workflow.status = 'completed';
       workflow.updatedAt = new Date().toISOString();
       workflow.result = 'All workflow steps completed successfully';
-
     } catch (error) {
       console.error(`Failed to process workflow ${workflow.id} with GenAI:`, error);
       workflow.status = 'failed';
@@ -354,11 +352,11 @@ Please process this step and provide the output that can be used for subsequent 
    */
   async executeGenAIScript(scriptData) {
     if (!this.isEnabled) {
-      throw new Error("GenAI service is disabled");
+      throw new Error('GenAI service is disabled');
     }
 
     if (!this.isInitialized || !genAIScript) {
-      throw new Error("GenAI Script not available - running in simulation mode");
+      throw new Error('GenAI Script not available - running in simulation mode');
     }
 
     try {
@@ -379,7 +377,6 @@ Please process this step and provide the output that can be used for subsequent 
           executedAt: new Date().toISOString()
         }
       };
-
     } catch (error) {
       console.error('GenAI Script execution failed:', error);
       return {
@@ -396,9 +393,24 @@ Please process this step and provide the output that can be used for subsequent 
   getAvailableModels() {
     return {
       models: [
-        { id: 'gpt-4', name: 'GPT-4', provider: 'openai', capabilities: ['text', 'analysis', 'code'] },
-        { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', provider: 'openai', capabilities: ['text', 'analysis'] },
-        { id: 'gpt-4o', name: 'GPT-4o', provider: 'openai', capabilities: ['text', 'vision', 'analysis'] }
+        {
+          id: 'gpt-4',
+          name: 'GPT-4',
+          provider: 'openai',
+          capabilities: ['text', 'analysis', 'code']
+        },
+        {
+          id: 'gpt-3.5-turbo',
+          name: 'GPT-3.5 Turbo',
+          provider: 'openai',
+          capabilities: ['text', 'analysis']
+        },
+        {
+          id: 'gpt-4o',
+          name: 'GPT-4o',
+          provider: 'openai',
+          capabilities: ['text', 'vision', 'analysis']
+        }
       ],
       default: this.config.genAiConfig?.model || 'gpt-4'
     };
@@ -424,6 +436,6 @@ Please process this step and provide the output that can be used for subsequent 
   cleanup() {
     this.agents.clear();
     this.tasks.clear();
-    console.log("✅ GenAI service cleaned up");
+    console.log('✅ GenAI service cleaned up');
   }
 }

@@ -20,16 +20,19 @@ export class CloudIQSyncService {
    */
   startPeriodicSync() {
     const intervalMinutes = this.config.syncIntervalMinutes || 60; // Default 1 hour
-    
+
     syncLogger.logSyncStart('periodic_setup');
-    
-    this.syncInterval = setInterval(async () => {
-      try {
-        await this.performFullSync();
-      } catch (error) {
-        syncLogger.logSyncError('periodic', error);
-      }
-    }, intervalMinutes * 60 * 1000);
+
+    this.syncInterval = setInterval(
+      async () => {
+        try {
+          await this.performFullSync();
+        } catch (error) {
+          syncLogger.logSyncError('periodic', error);
+        }
+      },
+      intervalMinutes * 60 * 1000
+    );
 
     // Perform initial sync
     this.performFullSync().catch(error => syncLogger.logSyncError('initial', error));
@@ -52,13 +55,13 @@ export class CloudIQSyncService {
   async performFullSync() {
     const startTime = Date.now();
     syncLogger.logSyncStart('full_sync');
-    
+
     const result = {
       success: true,
       message: '',
       syncedCount: 0,
       errorCount: 0,
-      errors: [],
+      errors: []
     };
 
     try {
@@ -88,15 +91,14 @@ export class CloudIQSyncService {
 
       result.message = `Sync completed: ${result.syncedCount} items synced, ${result.errorCount} errors`;
       result.duration = Date.now() - startTime;
-      
-      syncLogger.logSyncComplete('full_sync', result);
 
+      syncLogger.logSyncComplete('full_sync', result);
     } catch (error) {
       result.success = false;
       result.message = `Sync failed: ${error instanceof Error ? error.message : String(error)}`;
       result.errors.push(result.message);
       result.duration = Date.now() - startTime;
-      
+
       syncLogger.logSyncError('full_sync', error);
     }
 
@@ -127,9 +129,10 @@ export class CloudIQSyncService {
         try {
           // Check if product exists in HostBill
           const products = await this.hostbillClient.getProducts();
-          let hostbillProduct = products.find((p) => 
-            p.name.toLowerCase().includes(subscription.productName.toLowerCase()) ||
-            p.name.includes(subscription.subscriptionId)
+          let hostbillProduct = products.find(
+            p =>
+              p.name.toLowerCase().includes(subscription.productName.toLowerCase()) ||
+              p.name.includes(subscription.subscriptionId)
           );
 
           // Create product if it doesn't exist
@@ -139,7 +142,7 @@ export class CloudIQSyncService {
               price: subscription.unitPrice,
               billingCycle: subscription.billingPeriod,
               description: `Cloud-IQ managed ${subscription.productName}`,
-              category: 'cloud-services',
+              category: 'cloud-services'
             });
 
             hostbillProduct = {
@@ -148,7 +151,7 @@ export class CloudIQSyncService {
               price: subscription.unitPrice,
               billingCycle: subscription.billingPeriod,
               status: 'active',
-              category: 'cloud-services',
+              category: 'cloud-services'
             };
           }
 
@@ -160,11 +163,10 @@ export class CloudIQSyncService {
             quantity: subscription.quantity,
             unit_price: subscription.unitPrice,
             last_sync: new Date().toISOString(),
-            sync_status: 'synced',
+            sync_status: 'synced'
           });
 
           result.syncedCount++;
-
         } catch (error) {
           result.errorCount++;
           const errorMsg = `Failed to sync subscription ${subscription.subscriptionId}: ${error}`;
@@ -180,11 +182,10 @@ export class CloudIQSyncService {
             unit_price: subscription.unitPrice,
             last_sync: new Date().toISOString(),
             sync_status: 'error',
-            error_message: errorMsg,
+            error_message: errorMsg
           });
         }
       }
-
     } catch (error) {
       result.errorCount++;
       result.errors.push(`Failed to sync subscriptions: ${error}`);
@@ -217,43 +218,44 @@ export class CloudIQSyncService {
                 quantity_used: usage.quantity,
                 cost: usage.cost,
                 billing_period: usage.period || 'monthly',
-                synced_to_hostbill: false,
+                synced_to_hostbill: false
               });
             }
 
             // Get unsynced usage records for this subscription
             const unsyncedUsage = this.db.getUsageRecords(syncRecord.crayon_subscription_id, true);
-            
+
             if (unsyncedUsage.length > 0) {
               // Calculate total cost
               const totalCost = unsyncedUsage.reduce((sum, usage) => sum + usage.cost, 0);
-              
+
               if (totalCost > 0) {
                 // Find client for this service
                 const services = await this.hostbillClient.getClientServices(''); // This needs proper client lookup
-                const service = services.find((s) => s.id === syncRecord.hostbill_service_id);
-                
+                const service = services.find(s => s.id === syncRecord.hostbill_service_id);
+
                 if (service) {
                   // Create invoice in HostBill
                   const invoiceId = await this.hostbillClient.createInvoice({
                     clientId: service.clientId,
-                    items: [{
-                      description: `${syncRecord.product_name} usage charges`,
-                      amount: totalCost,
-                      quantity: 1,
-                    }],
+                    items: [
+                      {
+                        description: `${syncRecord.product_name} usage charges`,
+                        amount: totalCost,
+                        quantity: 1
+                      }
+                    ]
                   });
 
                   // Mark usage records as synced
-                  this.db.markUsageSynced(unsyncedUsage.map((u) => u.id));
-                  
+                  this.db.markUsageSynced(unsyncedUsage.map(u => u.id));
+
                   result.syncedCount++;
                   console.log(`Created invoice ${invoiceId} for usage charges: $${totalCost}`);
                 }
               }
             }
           }
-
         } catch (error) {
           result.errorCount++;
           const errorMsg = `Failed to sync usage for ${syncRecord.crayon_subscription_id}: ${error}`;
@@ -261,7 +263,6 @@ export class CloudIQSyncService {
           console.error(errorMsg);
         }
       }
-
     } catch (error) {
       result.errorCount++;
       result.errors.push(`Failed to sync usage data: ${error}`);
@@ -279,7 +280,7 @@ export class CloudIQSyncService {
       for (const order of pendingOrders) {
         try {
           const orderData = JSON.parse(order.order_data);
-          
+
           // Create order in HostBill if not already created
           if (!order.hostbill_order_id) {
             const hostbillOrderId = await this.hostbillClient.createServiceOrder({
@@ -287,17 +288,16 @@ export class CloudIQSyncService {
               productId: orderData.productId,
               billingCycle: orderData.billingCycle || 'monthly',
               quantity: orderData.quantity || 1,
-              customFields: orderData.customFields || {},
+              customFields: orderData.customFields || {}
             });
 
             this.db.updateOrderStatus(order.crayon_order_id, 'approved', hostbillOrderId);
-            
+
             // Update order status in Crayon
             await this.crayonClient.updateOrderStatus(order.crayon_order_id, 'approved');
-            
+
             result.syncedCount++;
           }
-
         } catch (error) {
           result.errorCount++;
           const errorMsg = `Failed to sync order ${order.crayon_order_id}: ${error}`;
@@ -307,7 +307,6 @@ export class CloudIQSyncService {
           this.db.updateOrderStatus(order.crayon_order_id, 'rejected');
         }
       }
-
     } catch (error) {
       result.errorCount++;
       result.errors.push(`Failed to sync orders: ${error}`);
@@ -325,26 +324,21 @@ export class CloudIQSyncService {
       for (const renewal of upcomingRenewals) {
         try {
           // Find corresponding HostBill service
-          const syncRecord = this.db.getSyncRecords().find(
-            (r) => r.crayon_subscription_id === renewal.subscriptionId
-          );
+          const syncRecord = this.db
+            .getSyncRecords()
+            .find(r => r.crayon_subscription_id === renewal.subscriptionId);
 
           if (syncRecord) {
             // Update service in HostBill with renewal information
-            await this.hostbillClient.updateServiceStatus(
-              syncRecord.hostbill_service_id,
-              'active'
-            );
+            await this.hostbillClient.updateServiceStatus(syncRecord.hostbill_service_id, 'active');
 
             result.syncedCount++;
           }
-
         } catch (error) {
           result.errorCount++;
           result.errors.push(`Failed to process renewal ${renewal.subscriptionId}: ${error}`);
         }
       }
-
     } catch (error) {
       result.errorCount++;
       result.errors.push(`Failed to process renewals: ${error}`);
@@ -357,24 +351,25 @@ export class CloudIQSyncService {
   async createOrder(orderData) {
     try {
       // Create order in Crayon
-      const crayonOrder = await this.crayonClient.createOrder(
-        orderData.customerId,
-        [{ productId: orderData.productId, quantity: orderData.quantity }]
-      );
+      const crayonOrder = await this.crayonClient.createOrder(orderData.customerId, [
+        { productId: orderData.productId, quantity: orderData.quantity }
+      ]);
 
       // Store order record
       this.db.createOrderRecord({
         crayon_order_id: crayonOrder.orderId,
         customer_id: orderData.customerId,
         status: 'pending',
-        total_amount: crayonOrder.subscriptions.reduce((sum, sub) => sum + (sub.quantity * sub.unitPrice), 0),
-        order_data: JSON.stringify(orderData),
+        total_amount: crayonOrder.subscriptions.reduce(
+          (sum, sub) => sum + sub.quantity * sub.unitPrice,
+          0
+        ),
+        order_data: JSON.stringify(orderData)
       });
 
       return {
-        crayonOrderId: crayonOrder.orderId,
+        crayonOrderId: crayonOrder.orderId
       };
-
     } catch (error) {
       throw new Error(`Failed to create order: ${error}`);
     }
@@ -386,7 +381,7 @@ export class CloudIQSyncService {
   getSyncStats() {
     const dbStats = this.db.getStats();
     const syncRecords = this.db.getSyncRecords();
-    
+
     const statusCounts = syncRecords.reduce((counts, record) => {
       counts[record.sync_status] = (counts[record.sync_status] || 0) + 1;
       return counts;
@@ -395,7 +390,7 @@ export class CloudIQSyncService {
     return {
       ...dbStats,
       syncStatusCounts: statusCounts,
-      lastSync: syncRecords[0]?.last_sync || 'Never',
+      lastSync: syncRecords[0]?.last_sync || 'Never'
     };
   }
 

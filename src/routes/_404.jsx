@@ -1,4 +1,4 @@
-import { Head } from "$fresh/runtime.ts";
+import { Head } from '$fresh/runtime.ts';
 
 export default function Error404() {
   return (
@@ -11,12 +11,8 @@ export default function Error404() {
           <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
             <div class="text-center">
               <h1 class="text-6xl font-bold text-gray-300">404</h1>
-              <h2 class="mt-4 text-xl font-medium text-gray-900">
-                Page not found
-              </h2>
-              <p class="mt-2 text-sm text-gray-600">
-                The page you're looking for doesn't exist.
-              </p>
+              <h2 class="mt-4 text-xl font-medium text-gray-900">Page not found</h2>
+              <p class="mt-2 text-sm text-gray-600">The page you're looking for doesn't exist.</p>
               <div class="mt-6">
                 <a
                   href="/"
