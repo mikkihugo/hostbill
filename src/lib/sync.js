@@ -206,7 +206,7 @@ export class CloudIQSyncService {
           const usageData = await this.crayonClient.getSubscriptionUsage(
             syncRecord.crayon_subscription_id,
             new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days ago
-            new Date().toISOString().split('T')[0] // today
+            new Date().toISOString().split('T')[0] // Today
           );
 
           if (usageData && usageData.usage) {

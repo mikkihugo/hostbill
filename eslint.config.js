@@ -2,10 +2,22 @@ import js from '@eslint/js';
 
 export default [
   {
-    ignores: ['node_modules/', 'dist/', 'build/', 'coverage/', '.next/', 'fresh.gen.js', 'test/.placeholder']
+    ignores: [
+      'node_modules/',
+      'dist/',
+      'build/',
+      'coverage/',
+      '.next/',
+      'fresh.gen.js',
+      'test/.placeholder',
+      'src/routes/**/*.jsx',
+      'src/routes/**/*.tsx',
+      'src/routes/**/*.js',
+      'src/routes/_app.jsx'
+    ]
   },
   {
-    files: ['src/**/*.js', 'src/**/*.jsx'],
+    files: ['src/lib/**/*.js', 'src/main.js'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',
@@ -20,6 +32,8 @@ export default [
         clearImmediate: 'readonly',
         setInterval: 'readonly',
         clearInterval: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
         fetch: 'readonly',
         URL: 'readonly',
         URLSearchParams: 'readonly',

@@ -96,7 +96,7 @@ class Logger {
     // Add metadata if present
     const metaKeys = Object.keys(meta);
     if (metaKeys.length > 0) {
-      output += ' ' + JSON.stringify(meta);
+      output += ` ${JSON.stringify(meta)}`;
     }
 
     return output;
