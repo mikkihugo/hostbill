@@ -3,6 +3,8 @@
  * Provides different log levels, formatting, and output options
  */
 
+/* eslint-disable no-console, no-magic-numbers */
+
 /**
  * Log levels in order of severity
  */

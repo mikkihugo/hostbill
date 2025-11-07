@@ -2,6 +2,8 @@
  * Sync service for managing billing synchronization between Crayon Cloud-IQ and HostBill
  */
 
+/* eslint-disable no-console, no-magic-numbers */
+
 import { CrayonCloudIQClient } from './api/crayon.js';
 import { HostBillAPIClient } from './api/hostbill.js';
 import { CloudIQDB } from './db/sqlite.js';

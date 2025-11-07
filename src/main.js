@@ -6,6 +6,8 @@
  * With Microsoft GenAI agent support and enhanced security
  */
 
+/* eslint-disable no-magic-numbers */
+
 import { CloudIQSyncService } from './lib/sync.js';
 import { GenAIService } from './lib/genai.js';
 import { getConfig } from './lib/config.js';

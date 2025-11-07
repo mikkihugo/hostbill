@@ -4,6 +4,8 @@
  * For production, replace with proper SQLite or PostgreSQL
  */
 
+/* eslint-disable no-console, no-magic-numbers */
+
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 

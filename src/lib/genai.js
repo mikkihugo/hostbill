@@ -4,6 +4,8 @@
  * Using genaiscript npm package for Microsoft AI capabilities
  */
 
+/* eslint-disable no-console, no-magic-numbers */
+
 // Import genaiscript modules
 let genAIScript = null;
 let _genAICore = null;

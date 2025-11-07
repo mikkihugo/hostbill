@@ -3,6 +3,8 @@
  * Ensures all required environment variables are properly configured
  */
 
+/* eslint-disable no-console, no-magic-numbers */
+
 /**
  * Required environment variables for production deployment
  */

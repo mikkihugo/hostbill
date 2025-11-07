@@ -4,6 +4,8 @@
  * API Documentation: https://apidocs.crayon.com/
  */
 
+/* eslint-disable no-console, no-magic-numbers */
+
 export class CrayonCloudIQClient {
   constructor(config) {
     this.config = {

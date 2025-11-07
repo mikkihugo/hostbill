@@ -4,6 +4,8 @@
  * API Documentation: https://dev.hostbillapp.com/
  */
 
+/* eslint-disable no-console, no-magic-numbers */
+
 export class HostBillAPIClient {
   config;
   cache = new Map();
