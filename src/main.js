@@ -562,8 +562,8 @@ function serveStaticPage(pathname) {
 
 function getPageContent(pathname) {
   switch (pathname) {
-    case '/':
-      return `
+  case '/':
+    return `
         <div class="px-4 py-6 sm:px-0">
             <div class="glass-effect rounded-2xl p-8 border border-white/20">
                 <div class="flex items-center space-x-3 mb-6">
@@ -640,8 +640,8 @@ function getPageContent(pathname) {
         </div>
       `;
 
-    case '/orders':
-      return `
+  case '/orders':
+    return `
         <div class="px-4 py-6 sm:px-0">
             <div class="glass-effect rounded-2xl p-8 border border-white/20">
                 <div class="flex items-center space-x-3 mb-6">
@@ -671,8 +671,8 @@ function getPageContent(pathname) {
         </div>
       `;
 
-    case '/sync':
-      return `
+  case '/sync':
+    return `
         <div class="px-4 py-6 sm:px-0">
             <div class="glass-effect rounded-2xl p-8 border border-white/20">
                 <div class="flex items-center space-x-3 mb-6">
@@ -713,8 +713,8 @@ function getPageContent(pathname) {
         </div>
       `;
 
-    default:
-      return `
+  default:
+    return `
         <div class="px-4 py-6 sm:px-0">
             <div class="glass-effect rounded-2xl p-12 border border-white/20 text-center">
                 <div class="w-20 h-20 bg-gradient-to-r from-gray-400 to-gray-500 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -769,7 +769,7 @@ process.on('SIGINT', () => shutdown('SIGINT'));
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 
 // Start the Node.js HTTP server
-const server = createServer(async (req, res) => {
+const server = createServer(async(req, res) => {
   try {
     const response = await handleNodeRequest(req);
 

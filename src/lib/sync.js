@@ -24,7 +24,7 @@ export class CloudIQSyncService {
     syncLogger.logSyncStart('periodic_setup');
 
     this.syncInterval = setInterval(
-      async () => {
+      async() => {
         try {
           await this.performFullSync();
         } catch (error) {

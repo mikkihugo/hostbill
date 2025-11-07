@@ -200,8 +200,8 @@ export class GenAIService {
     const { type, payload } = task;
 
     switch (type) {
-      case 'analysis':
-        return `Analyze the following data and provide insights: ${JSON.stringify(payload, null, 2)}
+    case 'analysis':
+      return `Analyze the following data and provide insights: ${JSON.stringify(payload, null, 2)}
         
 Please provide:
 1. Key findings
@@ -211,8 +211,8 @@ Please provide:
 
 Format your response as structured analysis.`;
 
-      case 'billing-review':
-        return `Review the following billing data for accuracy and optimization opportunities: ${JSON.stringify(payload, null, 2)}
+    case 'billing-review':
+      return `Review the following billing data for accuracy and optimization opportunities: ${JSON.stringify(payload, null, 2)}
         
 Please check for:
 1. Billing discrepancies
@@ -222,8 +222,8 @@ Please check for:
 
 Provide actionable recommendations.`;
 
-      case 'customer-support':
-        return `Help resolve the following customer support issue: ${JSON.stringify(payload, null, 2)}
+    case 'customer-support':
+      return `Help resolve the following customer support issue: ${JSON.stringify(payload, null, 2)}
         
 Please provide:
 1. Issue analysis
@@ -233,8 +233,8 @@ Please provide:
 
 Be professional and helpful in your response.`;
 
-      default:
-        return `Process the following request: ${JSON.stringify(payload, null, 2)}
+    default:
+      return `Process the following request: ${JSON.stringify(payload, null, 2)}
         
 Please analyze the request and provide appropriate assistance based on the context provided.`;
     }
@@ -247,15 +247,15 @@ Please analyze the request and provide appropriate assistance based on the conte
     const { type } = task;
 
     switch (type) {
-      case 'analysis':
-      case 'billing-review':
-        return 'billing-analyzer';
-      case 'customer-support':
-        return 'customer-support';
-      case 'sync-monitoring':
-        return 'sync-monitor';
-      default:
-        return 'billing-analyzer'; // Default agent
+    case 'analysis':
+    case 'billing-review':
+      return 'billing-analyzer';
+    case 'customer-support':
+      return 'customer-support';
+    case 'sync-monitoring':
+      return 'sync-monitor';
+    default:
+      return 'billing-analyzer'; // Default agent
     }
   }
 
