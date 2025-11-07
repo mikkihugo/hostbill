@@ -5,6 +5,7 @@ cloud-iq-deno/*.db
 cloud-iq-deno/*.log
 
 # TypeScript/Node.js
+node_modules/
 typescript-server/node_modules/
 typescript-server/dist/
 typescript-server/.env
