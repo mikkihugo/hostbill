@@ -3,15 +3,26 @@
  * Implements rate limiting, input validation, and security headers
  */
 
+// Security constants
+const RATE_LIMIT_WINDOW_MS = 900000; // 15 minutes in milliseconds
+const RATE_LIMIT_MAX_REQUESTS = 100; // Max requests per window
+const CLEANUP_INTERVAL_DIVISOR = 4; // Cleanup every window/4
+const MS_TO_SECONDS = 1000; // Milliseconds to seconds conversion
+const DEFAULT_MAX_STRING_LENGTH = 1000; // Default max length for string sanitization
+const WORKFLOW_NAME_MAX_LENGTH = 100; // Max length for workflow names
+const GENAI_PROMPT_MAX_LENGTH = 10000; // Max length for GenAI prompts
+const BYTES_PER_KILOBYTE = 1024; // Bytes in one kilobyte
+const BYTES_TO_MB = BYTES_PER_KILOBYTE * BYTES_PER_KILOBYTE; // Bytes to megabytes conversion (1024 * 1024)
+
 /**
  * Rate limiter implementation
  */
 class RateLimiter {
   constructor(options = {}) {
-    this.windowMs = options.windowMs || 900000; // 15 minutes
-    this.maxRequests = options.maxRequests || 100;
+    this.windowMs = options.windowMs || RATE_LIMIT_WINDOW_MS;
+    this.maxRequests = options.maxRequests || RATE_LIMIT_MAX_REQUESTS;
     this.requests = new Map();
-    this.cleanupInterval = setInterval(() => this.cleanup(), this.windowMs / 4);
+    this.cleanupInterval = setInterval(() => this.cleanup(), this.windowMs / CLEANUP_INTERVAL_DIVISOR);
   }
 
   /**
@@ -54,7 +65,7 @@ class RateLimiter {
       limit: this.maxRequests,
       remaining: Math.max(0, this.maxRequests - validRequests.length),
       resetTime: now + this.windowMs,
-      retryAfter: validRequests.length >= this.maxRequests ? this.windowMs / 1000 : null
+      retryAfter: validRequests.length >= this.maxRequests ? this.windowMs / MS_TO_SECONDS : null
     };
   }
 
@@ -94,7 +105,7 @@ export const validator = {
   /**
    * Validate and sanitize string input
    */
-  sanitizeString(input, maxLength = 1000) {
+  sanitizeString(input, maxLength = DEFAULT_MAX_STRING_LENGTH) {
     if (typeof input !== 'string') {
       return '';
     }
@@ -177,10 +188,82 @@ export const validator = {
 };
 
 /**
+ * Validation schemas for API endpoints
+ */
+const VALIDATION_SCHEMAS = {
+  '/api/sync/manual': {},
+  '/api/agents/tasks': {
+    type: {
+      type: 'string',
+      required: true,
+      enum: ['analysis', 'billing-review', 'customer-support', 'sync-monitoring']
+    },
+    priority: { type: 'string', required: false, enum: ['low', 'medium', 'high', 'urgent'] },
+    payload: { type: 'object', required: false }
+  },
+  '/api/agents/workflow': {
+    name: { type: 'string', required: true, maxLength: WORKFLOW_NAME_MAX_LENGTH },
+    steps: { type: 'object', required: true }
+  },
+  '/api/genai/execute': {
+    prompt: { type: 'string', required: true, maxLength: GENAI_PROMPT_MAX_LENGTH },
+    model: { type: 'string', required: false },
+    maxTokens: { type: 'number', required: false, min: 1, max: 4000 },
+    temperature: { type: 'number', required: false, min: 0, max: 2 }
+  }
+};
+
+/**
+ * Build security headers for response
+ */
+function buildSecurityHeaders(nodeEnv) {
+  const headers = new Map();
+
+  // Security headers
+  headers.set('X-Content-Type-Options', 'nosniff');
+  headers.set('X-Frame-Options', 'DENY');
+  headers.set('X-XSS-Protection', '1; mode=block');
+  headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  headers.set(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self' 'unsafe-inline' cdn.tailwindcss.com unpkg.com; style-src 'self' 'unsafe-inline' cdn.tailwindcss.com; img-src 'self' data:; connect-src 'self'"
+  );
+
+  // HSTS for HTTPS
+  if (nodeEnv === 'production') {
+    headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+
+  return headers;
+}
+
+/**
+ * Build rate limit error response
+ */
+function buildRateLimitErrorResponse(limitInfo) {
+  return {
+    status: 429,
+    headers: {
+      'Content-Type': 'application/json',
+      'Retry-After': limitInfo.retryAfter.toString(),
+      'X-RateLimit-Limit': limitInfo.limit.toString(),
+      'X-RateLimit-Remaining': '0',
+      'X-RateLimit-Reset': limitInfo.resetTime.toString()
+    },
+    body: JSON.stringify({
+      error: 'Too Many Requests',
+      message: `Rate limit exceeded. Try again in ${limitInfo.retryAfter} seconds.`,
+      retryAfter: limitInfo.retryAfter
+    })
+  };
+}
+
+/**
  * Create security middleware
  */
 export function createSecurityMiddleware(config) {
   const rateLimiter = new RateLimiter(config.security.rateLimit);
+  const securityHeaders = buildSecurityHeaders(config.server.nodeEnv);
 
   return {
     rateLimiter,
@@ -189,23 +272,7 @@ export function createSecurityMiddleware(config) {
      * Apply security headers to response
      */
     applySecurityHeaders(response) {
-      const headers = response.headers || new Map();
-
-      // Security headers
-      headers.set('X-Content-Type-Options', 'nosniff');
-      headers.set('X-Frame-Options', 'DENY');
-      headers.set('X-XSS-Protection', '1; mode=block');
-      headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-      headers.set(
-        'Content-Security-Policy',
-        "default-src 'self'; script-src 'self' 'unsafe-inline' cdn.tailwindcss.com unpkg.com; style-src 'self' 'unsafe-inline' cdn.tailwindcss.com; img-src 'self' data:; connect-src 'self'"
-      );
-
-      // HSTS for HTTPS
-      if (config.server.nodeEnv === 'production') {
-        headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-      }
-
+      const headers = response.headers || securityHeaders;
       return { ...response, headers };
     },
 
@@ -216,23 +283,7 @@ export function createSecurityMiddleware(config) {
       const clientId = this.getClientId(request);
 
       if (!rateLimiter.isAllowed(clientId)) {
-        const limitInfo = rateLimiter.getLimitInfo(clientId);
-
-        return {
-          status: 429,
-          headers: {
-            'Content-Type': 'application/json',
-            'Retry-After': limitInfo.retryAfter.toString(),
-            'X-RateLimit-Limit': limitInfo.limit.toString(),
-            'X-RateLimit-Remaining': '0',
-            'X-RateLimit-Reset': limitInfo.resetTime.toString()
-          },
-          body: JSON.stringify({
-            error: 'Too Many Requests',
-            message: `Rate limit exceeded. Try again in ${limitInfo.retryAfter} seconds.`,
-            retryAfter: limitInfo.retryAfter
-          })
-        };
+        return buildRateLimitErrorResponse(rateLimiter.getLimitInfo(clientId));
       }
 
       const limitInfo = rateLimiter.getLimitInfo(clientId);
@@ -286,28 +337,7 @@ export function createSecurityMiddleware(config) {
      * Get validation schemas for different endpoints
      */
     getValidationSchemas() {
-      return {
-        '/api/sync/manual': {},
-        '/api/agents/tasks': {
-          type: {
-            type: 'string',
-            required: true,
-            enum: ['analysis', 'billing-review', 'customer-support', 'sync-monitoring']
-          },
-          priority: { type: 'string', required: false, enum: ['low', 'medium', 'high', 'urgent'] },
-          payload: { type: 'object', required: false }
-        },
-        '/api/agents/workflow': {
-          name: { type: 'string', required: true, maxLength: 100 },
-          steps: { type: 'object', required: true }
-        },
-        '/api/genai/execute': {
-          prompt: { type: 'string', required: true, maxLength: 10000 },
-          model: { type: 'string', required: false },
-          maxTokens: { type: 'number', required: false, min: 1, max: 4000 },
-          temperature: { type: 'number', required: false, min: 0, max: 2 }
-        }
-      };
+      return VALIDATION_SCHEMAS;
     },
 
     /**
@@ -369,9 +399,9 @@ export const healthCheck = {
       status: 'healthy',
       uptime: Math.floor(uptime),
       memory: {
-        used: Math.round(memUsage.heapUsed / 1024 / 1024),
-        total: Math.round(memUsage.heapTotal / 1024 / 1024),
-        external: Math.round(memUsage.external / 1024 / 1024)
+        used: Math.round(memUsage.heapUsed / BYTES_TO_MB),
+        total: Math.round(memUsage.heapTotal / BYTES_TO_MB),
+        external: Math.round(memUsage.external / BYTES_TO_MB)
       },
       nodeVersion: process.version,
       platform: process.platform

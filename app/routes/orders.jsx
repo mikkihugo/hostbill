@@ -1,5 +1,8 @@
 import { useLoaderData } from '@remix-run/react';
 
+// Currency formatting constant
+const CURRENCY_DECIMAL_PLACES = 2;
+
 export const meta = () => [{ title: 'Orders - Cloud-IQ' }];
 
 export async function loader() {
@@ -60,7 +63,7 @@ export default function Orders() {
                         {order.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">${(order.amount || 0).toFixed(2)}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">${(order.amount || 0).toFixed(CURRENCY_DECIMAL_PLACES)}</td>
                   </tr>
                 ))
               ) : (
