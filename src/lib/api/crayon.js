@@ -4,15 +4,13 @@
  * API Documentation: https://apidocs.crayon.com/
  */
 
-
-
-
+/* eslint-disable no-console, no-magic-numbers */
 
 export class CrayonCloudIQClient {
   constructor(config) {
     this.config = {
       ...config,
-      apiUrl: config.apiUrl || 'https://api.crayon.com/api/v1',
+      apiUrl: config.apiUrl || 'https://api.crayon.com/api/v1'
     };
     this.accessToken = null;
     this.tokenExpiry = 0;
@@ -28,7 +26,7 @@ export class CrayonCloudIQClient {
     }
 
     const tokenUrl = `${this.config.apiUrl}/auth/token`;
-    
+
     // Use dynamic authentication if enabled
     if (this.config.dynamicAuth && this.config.username) {
       const body = new URLSearchParams({
@@ -36,18 +34,18 @@ export class CrayonCloudIQClient {
         username: this.config.username,
         client_id: this.config.clientId,
         client_secret: this.config.clientSecret,
-        scope: 'https://api.crayon.com/.default',
+        scope: 'https://api.crayon.com/.default'
       });
-      
+
       console.log(`🔐 Using dynamic authentication for user: ${this.config.username}`);
-      
+
       try {
         const response = await fetch(tokenUrl, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
+            'Content-Type': 'application/x-www-form-urlencoded'
           },
-          body: body.toString(),
+          body: body.toString()
         });
 
         if (!response.ok) {
@@ -57,29 +55,29 @@ export class CrayonCloudIQClient {
         const data = await response.json();
         this.accessToken = data.access_token;
         this.tokenExpiry = now + (data.expires_in * 1000);
-        
-        console.log("✅ Dynamic authentication successful");
+
+        console.log('✅ Dynamic authentication successful');
         return;
-      } catch (error) {
-        console.error("❌ Dynamic authentication failed, falling back to client credentials");
+      } catch {
+        console.error('❌ Dynamic authentication failed, falling back to client credentials');
       }
     }
-    
+
     // Fallback to client credentials authentication
     const body = new URLSearchParams({
       grant_type: 'client_credentials',
       client_id: this.config.clientId,
       client_secret: this.config.clientSecret,
-      scope: 'https://api.crayon.com/.default',
+      scope: 'https://api.crayon.com/.default'
     });
 
     try {
       const response = await fetch(tokenUrl, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/x-www-form-urlencoded'
         },
-        body: body.toString(),
+        body: body.toString()
       });
 
       if (!response.ok) {
@@ -104,17 +102,17 @@ export class CrayonCloudIQClient {
     const response = await fetch(url, {
       ...options,
       headers: {
-        'Authorization': `Bearer ${this.accessToken}`,
+        Authorization: `Bearer ${this.accessToken}`,
         'Content-Type': 'application/json',
-        ...options.headers,
-      },
+        ...options.headers
+      }
     });
 
     if (!response.ok) {
       throw new Error(`API request failed: ${response.status} - ${await response.text()}`);
     }
 
-    return await response.json();
+    return response.json();
   }
 
   /**
@@ -122,33 +120,35 @@ export class CrayonCloudIQClient {
    */
   async getActiveSubscriptions() {
     const data = await this.makeRequest('/subscriptions?status=active');
-    
-    return data.items?.map((sub) => ({
-      subscriptionId: sub.id,
-      productName: sub.productName,
-      quantity: sub.quantity,
-      unitPrice: sub.unitPrice,
-      totalCost: sub.quantity * sub.unitPrice,
-      billingPeriod: sub.billingCycle,
-      lastUpdated: sub.lastModified,
-    })) || [];
+
+    return (
+      data.items?.map(sub => ({
+        subscriptionId: sub.id,
+        productName: sub.productName,
+        quantity: sub.quantity,
+        unitPrice: sub.unitPrice,
+        totalCost: sub.quantity * sub.unitPrice,
+        billingPeriod: sub.billingCycle,
+        lastUpdated: sub.lastModified
+      })) || []
+    );
   }
 
   /**
    * Get subscription usage data for billing
    */
-  async getSubscriptionUsage(subscriptionId, fromDate, toDate) {
+  getSubscriptionUsage(subscriptionId, fromDate, toDate) {
     let endpoint = `/subscriptions/${subscriptionId}/usage`;
-    
+
     const params = new URLSearchParams();
     if (fromDate) params.set('from', fromDate);
     if (toDate) params.set('to', toDate);
-    
+
     if (params.toString()) {
       endpoint += `?${params.toString()}`;
     }
 
-    return await this.makeRequest(endpoint);
+    return this.makeRequest(endpoint);
   }
 
   /**
@@ -159,13 +159,13 @@ export class CrayonCloudIQClient {
       customerId,
       items: items.map(item => ({
         productId: item.productId,
-        quantity: item.quantity,
-      })),
+        quantity: item.quantity
+      }))
     };
 
     const response = await this.makeRequest('/orders', {
       method: 'POST',
-      body: JSON.stringify(orderData),
+      body: JSON.stringify(orderData)
     });
 
     return {
@@ -173,7 +173,7 @@ export class CrayonCloudIQClient {
       customerId: response.customerId,
       subscriptions: response.items || [],
       status: response.status,
-      createdAt: response.createdAt,
+      createdAt: response.createdAt
     };
   }
 
@@ -183,7 +183,7 @@ export class CrayonCloudIQClient {
   async updateOrderStatus(orderId, status) {
     await this.makeRequest(`/orders/${orderId}/status`, {
       method: 'PATCH',
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status })
     });
   }
 
@@ -193,14 +193,16 @@ export class CrayonCloudIQClient {
   async getBillingData(fromDate, toDate) {
     const endpoint = `/billing/charges?from=${fromDate}&to=${toDate}`;
     const data = await this.makeRequest(endpoint);
-    
-    return data.items?.map((charge) => ({
-      hostbillInvoiceId: '', // To be mapped in sync process
-      crayonSubscriptionId: charge.subscriptionId,
-      amount: charge.amount,
-      status: 'pending',
-      lastSync: new Date().toISOString(),
-    })) || [];
+
+    return (
+      data.items?.map(charge => ({
+        hostbillInvoiceId: '', // To be mapped in sync process
+        crayonSubscriptionId: charge.subscriptionId,
+        amount: charge.amount,
+        status: 'pending',
+        lastSync: new Date().toISOString()
+      })) || []
+    );
   }
 
   /**
@@ -219,8 +221,8 @@ export class CrayonCloudIQClient {
   /**
    * Get customer information
    */
-  async getCustomer(customerId) {
-    return await this.makeRequest(`/customers/${customerId}`);
+  getCustomer(customerId) {
+    return this.makeRequest(`/customers/${customerId}`);
   }
 
   /**

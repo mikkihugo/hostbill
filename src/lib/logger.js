@@ -3,6 +3,8 @@
  * Provides different log levels, formatting, and output options
  */
 
+/* eslint-disable no-console, no-magic-numbers */
+
 /**
  * Log levels in order of severity
  */
@@ -19,9 +21,9 @@ const LOG_LEVELS = {
  */
 const COLORS = {
   error: '\x1b[31m', // Red
-  warn: '\x1b[33m',  // Yellow
-  info: '\x1b[36m',  // Cyan
-  http: '\x1b[35m',  // Magenta
+  warn: '\x1b[33m', // Yellow
+  info: '\x1b[36m', // Cyan
+  http: '\x1b[35m', // Magenta
   debug: '\x1b[90m', // Gray
   reset: '\x1b[0m'
 };
@@ -50,7 +52,7 @@ class Logger {
    */
   formatMessage(level, message, meta = {}) {
     const timestamp = this.enableTimestamp ? new Date().toISOString() : null;
-    
+
     const logEntry = {
       timestamp,
       level,
@@ -75,30 +77,30 @@ class Logger {
    */
   formatConsole(logEntry) {
     const { timestamp, level, message, ...meta } = logEntry;
-    
+
     let output = '';
-    
+
     if (this.enableColors) {
       output += COLORS[level] || '';
     }
-    
+
     if (timestamp) {
       output += `[${timestamp}] `;
     }
-    
+
     output += `${level.toUpperCase().padEnd(5)} `;
     output += message;
-    
+
     if (this.enableColors) {
       output += COLORS.reset;
     }
-    
+
     // Add metadata if present
     const metaKeys = Object.keys(meta);
     if (metaKeys.length > 0) {
-      output += ' ' + JSON.stringify(meta);
+      output += ` ${JSON.stringify(meta)}`;
     }
-    
+
     return output;
   }
 
@@ -111,7 +113,7 @@ class Logger {
     }
 
     const logEntry = this.formatMessage(level, message, meta);
-    
+
     if (process.env.NODE_ENV === 'production') {
       // Production: JSON format for log aggregation
       console.log(JSON.stringify(logEntry));
@@ -155,7 +157,7 @@ export function createRequestLogger(logger) {
      */
     logRequest(request) {
       const startTime = Date.now();
-      
+
       logger.http('Incoming request', {
         method: request.method,
         url: request.url,
@@ -163,7 +165,7 @@ export function createRequestLogger(logger) {
         ip: request.headers['x-forwarded-for'] || 'unknown',
         requestId: this.generateRequestId()
       });
-      
+
       return startTime;
     },
 
@@ -172,7 +174,7 @@ export function createRequestLogger(logger) {
      */
     logResponse(request, response, startTime, error = null) {
       const duration = Date.now() - startTime;
-      
+
       const logData = {
         method: request.method,
         url: request.url,
@@ -208,7 +210,10 @@ export function createRequestLogger(logger) {
  */
 export function createAppLogger(config = {}) {
   return new Logger({
-    level: config.logLevel || process.env.LOG_LEVEL || (process.env.NODE_ENV === 'production' ? 'info' : 'debug'),
+    level:
+      config.logLevel ||
+      process.env.LOG_LEVEL ||
+      (process.env.NODE_ENV === 'production' ? 'info' : 'debug'),
     service: 'cloud-iq-hostbill',
     version: '1.0.0',
     ...config
@@ -343,16 +348,16 @@ export function createErrorTracker(appLogger) {
      * Track unhandled errors
      */
     setupErrorHandlers() {
-      process.on('uncaughtException', (error) => {
+      process.on('uncaughtException', error => {
         this.trackError(error, { type: 'uncaughtException' });
         console.error('Uncaught Exception:', error);
-        
+
         // Give time for logs to be written then exit
         setTimeout(() => process.exit(1), 1000);
       });
 
       process.on('unhandledRejection', (reason, promise) => {
-        this.trackError(new Error(reason), { 
+        this.trackError(new Error(reason), {
           type: 'unhandledRejection',
           promise: promise.toString()
         });

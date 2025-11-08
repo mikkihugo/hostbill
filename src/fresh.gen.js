@@ -2,24 +2,24 @@
 // This file SHOULD be checked into source version control.
 // This file is automatically updated during development when running `dev.ts`.
 
-import * as $_404 from "./routes/_404.jsx";
-import * as $_app from "./routes/_app.jsx";
-import * as $api_sync_manual from "./routes/api/sync/manual.js";
-import * as $index from "./routes/index.jsx";
-import * as $orders_index from "./routes/orders/index.jsx";
-import * as $sync_index from "./routes/sync/index.jsx";
+import * as $_404 from './routes/_404.jsx';
+import * as $_app from './routes/_app.jsx';
+import * as $api_sync_manual from './routes/api/sync/manual.js';
+import * as $index from './routes/index.jsx';
+import * as $orders_index from './routes/orders/index.jsx';
+import * as $sync_index from './routes/sync/index.jsx';
 
 const manifest = {
   routes: {
-    "./routes/_404.jsx": $_404,
-    "./routes/_app.jsx": $_app,
-    "./routes/api/sync/manual.js": $api_sync_manual,
-    "./routes/index.jsx": $index,
-    "./routes/orders/index.jsx": $orders_index,
-    "./routes/sync/index.jsx": $sync_index,
+    './routes/_404.jsx': $_404,
+    './routes/_app.jsx': $_app,
+    './routes/api/sync/manual.js': $api_sync_manual,
+    './routes/index.jsx': $index,
+    './routes/orders/index.jsx': $orders_index,
+    './routes/sync/index.jsx': $sync_index
   },
   islands: {},
-  baseUrl: import.meta.url,
+  baseUrl: import.meta.url
 };
 
 export default manifest;

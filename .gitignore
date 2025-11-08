@@ -1,13 +1,13 @@
-# Deno
-cloud-iq-deno/.env
-cloud-iq-deno/data/
-cloud-iq-deno/*.db
-cloud-iq-deno/*.log
-
 # TypeScript/Node.js
+node_modules/
 typescript-server/node_modules/
 typescript-server/dist/
 typescript-server/.env
+
+# Remix
+build/
+public/build/
+.remix/
 
 # General
 *.log
