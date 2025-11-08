@@ -15,6 +15,7 @@ export async function loader() {
     const orders = await response.json();
     return { orders: Array.isArray(orders) ? orders : [] };
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Orders loader error:', error);
     return { orders: [] };
   }

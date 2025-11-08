@@ -134,5 +134,15 @@ export default [
       'max-lines-per-function': 'off',
       'max-statements': 'off'
     }
+  },
+  {
+    files: ['app/**/*.{jsx,tsx}'],
+    rules: {
+      'no-unused-vars': ['error', {
+        'argsIgnorePattern': '^_',
+        'varsIgnorePattern': '^_|^[A-Z]',
+        'caughtErrorsIgnorePattern': '^_'
+      }]
+    }
   }
 ];

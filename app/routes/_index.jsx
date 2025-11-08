@@ -8,14 +8,15 @@ export async function loader() {
     const response = await fetch('http://localhost:3000/api/sync/stats', {
       headers: { 'Content-Type': 'application/json' }
     });
-    
+
     if (!response.ok) {
       throw new Error('Failed to fetch stats');
     }
-    
+
     const stats = await response.json();
     return { stats };
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Stats loader error:', error);
     return {
       stats: {

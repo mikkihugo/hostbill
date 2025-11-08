@@ -52,7 +52,7 @@ export default function Sync() {
 
         {actionData && (
           <div
-            className={actionData.success ? "p-4 rounded-lg bg-green-50 border border-green-200 text-green-700" : "p-4 rounded-lg bg-red-50 border border-red-200 text-red-700"}
+            className={actionData.success ? 'p-4 rounded-lg bg-green-50 border border-green-200 text-green-700' : 'p-4 rounded-lg bg-red-50 border border-red-200 text-red-700'}
           >
             {actionData.message}
           </div>
