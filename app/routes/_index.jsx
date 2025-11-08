@@ -1,37 +1,45 @@
-import { useEffect, useState } from 'react';
-import Navigation from '../components/Navigation';
-import Dashboard from '../components/Dashboard';
+export const meta = () => [{ title: 'Dashboard - Cloud-IQ' }];
 
-export const meta = () => [
-  { title: 'Dashboard - Cloud-IQ' },
-  { name: 'description', content: 'Cloud-IQ Dashboard with sync status and statistics' }
-];
+export async function loader() {
+  try {
+    const response = await fetch('http://localhost:8000/api/sync/stats');
+    const stats = await response.json();
+    return { stats };
+  } catch (error) {
+    console.error('Failed to load stats:', error);
+    return { stats: null };
+  }
+}
 
-export default function Index() {
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch('/api/sync/stats')
-      .then(res => res.json())
-      .then(data => {
-        setStats(data);
-        setLoading(false);
-      })
-      .catch(error => {
-        console.error('Failed to load stats:', error);
-        setLoading(false);
-      });
-  }, []);
-
+export default function Dashboard() {
   return (
-    <div className="min-h-screen">
-      <Navigation />
-      <main className="max-w-7xl mx-auto py-10 sm:px-6 lg:px-8">
-        <div id="content" className="animate-fade-in">
-          <Dashboard stats={stats} loading={loading} />
+    <div className="px-4 py-6 sm:px-0">
+      <div className="glass-effect rounded-2xl p-8 border border-white/20">
+        <div className="flex items-center space-x-3 mb-6">
+          <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+            <i data-lucide="layout-dashboard" className="w-7 h-7 text-white"></i>
+          </div>
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+              Cloud-IQ Dashboard
+            </h1>
+            <p className="text-gray-600 text-lg mt-1">
+              🚀 Crayon Cloud-IQ integration with HostBill for CSP billing management
+            </p>
+          </div>
         </div>
-      </main>
+
+        <div id="sync-stats" className="mb-10">
+          <div className="animate-pulse flex space-x-4">
+            <div className="rounded-2xl bg-slate-200 h-32 w-full"></div>
+            <div className="rounded-2xl bg-slate-200 h-32 w-full"></div>
+            <div className="rounded-2xl bg-slate-200 h-32 w-full"></div>
+            <div className="rounded-2xl bg-slate-200 h-32 w-full"></div>
+          </div>
+        </div>
+
+        <div id="agent-status"></div>
+      </div>
     </div>
   );
 }

@@ -7,12 +7,11 @@ export default [
       'dist/',
       'build/',
       'coverage/',
-      '.next/',
       'test/.placeholder'
     ]
   },
   {
-    files: ['src/lib/**/*.js', 'src/main.js', 'app/**/*.{js,jsx}', 'remix.config.js'],
+    files: ['app/**/*.{js,jsx,ts,tsx}', 'src/lib/**/*.js', 'src/main.js', 'remix.config.js', 'server.js'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',

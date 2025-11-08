@@ -20,12 +20,6 @@
       "options": {
         "parser": "yaml"
       }
-    },
-    {
-      "files": ["app/**/*.{jsx,js}"],
-      "options": {
-        "parser": "babel"
-      }
     }
   ]
 }
