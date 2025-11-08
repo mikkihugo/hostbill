@@ -8,12 +8,7 @@ export default [
       'build/',
       'coverage/',
       '.next/',
-      'fresh.gen.js',
-      'test/.placeholder',
-      'src/routes/**/*.jsx',
-      'src/routes/**/*.tsx',
-      'src/routes/**/*.js',
-      'src/routes/_app.jsx'
+      'test/.placeholder'
     ]
   },
   {

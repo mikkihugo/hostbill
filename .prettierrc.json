@@ -20,12 +20,6 @@
       "options": {
         "parser": "yaml"
       }
-    },
-    {
-      "files": ["src/routes/**/*.jsx", "src/routes/**/*.js"],
-      "options": {
-        "parser": "typescript"
-      }
     }
   ]
 }
