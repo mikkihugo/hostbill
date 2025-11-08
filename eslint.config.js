@@ -12,10 +12,15 @@ export default [
     ]
   },
   {
-    files: ['src/lib/**/*.js', 'src/main.js'],
+    files: ['src/lib/**/*.js', 'src/main.js', 'app/**/*.{js,jsx}', 'remix.config.js'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',
+      parserOptions: {
+        ecmaFeatures: {
+          jsx: true
+        }
+      },
       globals: {
         console: 'readonly',
         process: 'readonly',

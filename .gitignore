@@ -4,6 +4,11 @@ typescript-server/node_modules/
 typescript-server/dist/
 typescript-server/.env
 
+# Remix
+build/
+public/build/
+.remix/
+
 # General
 *.log
 *.tmp
