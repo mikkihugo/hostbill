@@ -36,7 +36,9 @@ export default function Sync() {
             <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
               Sync Monitor
             </h1>
-            <p className="text-gray-600 text-lg mt-1">Monitor Crayon and HostBill synchronization</p>
+            <p className="text-gray-600 text-lg mt-1">
+              Monitor Crayon and HostBill synchronization
+            </p>
           </div>
         </div>
 
@@ -52,7 +54,11 @@ export default function Sync() {
 
         {actionData && (
           <div
-            className={actionData.success ? 'p-4 rounded-lg bg-green-50 border border-green-200 text-green-700' : 'p-4 rounded-lg bg-red-50 border border-red-200 text-red-700'}
+            className={
+              actionData.success
+                ? 'p-4 rounded-lg bg-green-50 border border-green-200 text-green-700'
+                : 'p-4 rounded-lg bg-red-50 border border-red-200 text-red-700'
+            }
           >
             {actionData.message}
           </div>
@@ -61,9 +67,15 @@ export default function Sync() {
         <div className="bg-white/50 rounded-xl p-6 border border-white/20 mt-8">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Sync Information</h3>
           <div className="space-y-2 text-sm text-gray-600">
-            <p><strong>Sync Engine:</strong> Tracks billing data between Crayon and HostBill</p>
-            <p><strong>Frequency:</strong> Automatic every 4 hours plus manual triggers</p>
-            <p><strong>Last Status:</strong> Check dashboard for latest stats</p>
+            <p>
+              <strong>Sync Engine:</strong> Tracks billing data between Crayon and HostBill
+            </p>
+            <p>
+              <strong>Frequency:</strong> Automatic every 4 hours plus manual triggers
+            </p>
+            <p>
+              <strong>Last Status:</strong> Check dashboard for latest stats
+            </p>
           </div>
         </div>
       </div>

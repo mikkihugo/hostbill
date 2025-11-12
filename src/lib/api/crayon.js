@@ -54,7 +54,7 @@ export class CrayonCloudIQClient {
 
         const data = await response.json();
         this.accessToken = data.access_token;
-        this.tokenExpiry = now + (data.expires_in * 1000);
+        this.tokenExpiry = now + data.expires_in * 1000;
 
         console.log('✅ Dynamic authentication successful');
         return;
@@ -86,7 +86,7 @@ export class CrayonCloudIQClient {
 
       const data = await response.json();
       this.accessToken = data.access_token;
-      this.tokenExpiry = now + (data.expires_in * 1000) - 300000; // 5 min buffer
+      this.tokenExpiry = now + data.expires_in * 1000 - 300000; // 5 min buffer
     } catch (error) {
       throw new Error(`Failed to authenticate with Crayon API: ${error}`);
     }

@@ -22,7 +22,10 @@ class RateLimiter {
     this.windowMs = options.windowMs || RATE_LIMIT_WINDOW_MS;
     this.maxRequests = options.maxRequests || RATE_LIMIT_MAX_REQUESTS;
     this.requests = new Map();
-    this.cleanupInterval = setInterval(() => this.cleanup(), this.windowMs / CLEANUP_INTERVAL_DIVISOR);
+    this.cleanupInterval = setInterval(
+      () => this.cleanup(),
+      this.windowMs / CLEANUP_INTERVAL_DIVISOR
+    );
   }
 
   /**

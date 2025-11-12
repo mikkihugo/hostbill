@@ -5,6 +5,7 @@ Production-ready Cloud-IQ HostBill Integration with Microsoft GenAI for CSP bill
 ## Architecture
 
 **Modern Stack:**
+
 - **Frontend:** Remix v2.12 with React 18 (file-based routing)
 - **Runtime:** Node.js 22 LTS
 - **Backend:** Node.js HTTP server with Web API compatibility
@@ -16,21 +17,25 @@ Production-ready Cloud-IQ HostBill Integration with Microsoft GenAI for CSP bill
 ## Features
 
 ### Dashboard
+
 - Real-time sync status: Active syncs, usage records, orders
 - Agent monitoring: Multi-agent crew status and task management
 - Stats visualization: Interactive cards with live metrics
 
 ### Orders Management
+
 - Browse all CSP orders from HostBill
 - View order status and billing amounts
 - Track customer subscriptions
 
 ### Sync Monitor
+
 - Manual trigger for Crayon and HostBill synchronization
 - Sync activity logging
 - Status notifications
 
 ### Backend Integration
+
 - Crayon API: Cloud-IQ CSP product catalog
 - HostBill API: Customer and order management
 - GenAI: Intelligent billing automation and agent workflows
@@ -154,16 +159,19 @@ export async function action({ request }) {
 ## Code Quality
 
 ### ESLint
+
 - All 50+ errors fixed
 - 12 intentional warnings (security.js)
 - Enforces proper patterns
 
 ### Prettier
+
 - 100 character line width
 - Single quotes
 - 2-space indentation
 
 ### Validation
+
 ```bash
 npm run validate  # lint + format check + tests
 ```
@@ -181,6 +189,7 @@ npm run docker:prod    # Production
 ### Environment Variables
 
 Create `.env` file with:
+
 - CRAYON_CLIENT_ID, CRAYON_CLIENT_SECRET
 - HOSTBILL_API_KEY, HOSTBILL_API_URL
 - GENAI_API_KEY
