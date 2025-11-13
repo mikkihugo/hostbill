@@ -26,7 +26,7 @@ export class CloudIQSyncService {
     syncLogger.logSyncStart('periodic_setup');
 
     this.syncInterval = setInterval(
-      async() => {
+      async () => {
         try {
           await this.performFullSync();
         } catch (error) {
@@ -225,7 +225,7 @@ export class CloudIQSyncService {
     // Get usage data from Crayon
     const usageData = await this.crayonClient.getSubscriptionUsage(
       syncRecord.crayon_subscription_id,
-      new Date(Date.now() - (30 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0], // 30 days ago
+      new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days ago
       new Date().toISOString().split('T')[0] // Today
     );
 
@@ -383,7 +383,7 @@ export class CloudIQSyncService {
         customer_id: orderData.customerId,
         status: 'pending',
         total_amount: crayonOrder.subscriptions.reduce(
-          (sum, sub) => sum + (sub.quantity * sub.unitPrice),
+          (sum, sub) => sum + sub.quantity * sub.unitPrice,
           0
         ),
         order_data: JSON.stringify(orderData)

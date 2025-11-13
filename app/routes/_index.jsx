@@ -33,7 +33,9 @@ const StatCard = ({ icon, label, value, color, message }) => (
   <div className="bg-white/70 backdrop-blur-sm overflow-hidden shadow-lg rounded-2xl border border-white/20 hover-lift">
     <div className="p-6">
       <div className="flex items-center">
-        <div className={`flex-shrink-0 w-12 h-12 bg-gradient-to-r from-${color}-500 to-${color}-600 rounded-xl flex items-center justify-center shadow-lg`}>
+        <div
+          className={`flex-shrink-0 w-12 h-12 bg-gradient-to-r from-${color}-500 to-${color}-600 rounded-xl flex items-center justify-center shadow-lg`}
+        >
           <i data-lucide={icon} className="w-6 h-6 text-white"></i>
         </div>
         <div className="ml-5 w-0 flex-1">
@@ -44,7 +46,8 @@ const StatCard = ({ icon, label, value, color, message }) => (
     </div>
     <div className={`bg-gradient-to-r from-${color}-50 to-${color}-100 px-6 py-3`}>
       <div className={`text-sm text-${color}-700 font-medium`}>
-        <i data-lucide="trending-up" className="w-4 h-4 inline mr-1"></i>{message}
+        <i data-lucide="trending-up" className="w-4 h-4 inline mr-1"></i>
+        {message}
       </div>
     </div>
   </div>

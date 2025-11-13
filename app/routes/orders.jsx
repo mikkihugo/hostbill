@@ -46,8 +46,12 @@ export default function Orders() {
           <table className="min-w-full">
             <thead>
               <tr className="border-b border-gray-200">
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Order ID</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Customer</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                  Order ID
+                </th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                  Customer
+                </th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Amount</th>
               </tr>
@@ -59,11 +63,19 @@ export default function Orders() {
                     <td className="px-6 py-4 text-sm text-gray-900">{order.id}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{order.customer}</td>
                     <td className="px-6 py-4 text-sm">
-                      <span className={order.status === 'completed' ? 'px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800' : 'px-2 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800'}>
+                      <span
+                        className={
+                          order.status === 'completed'
+                            ? 'px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800'
+                            : 'px-2 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800'
+                        }
+                      >
                         {order.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">${(order.amount || 0).toFixed(CURRENCY_DECIMAL_PLACES)}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      ${(order.amount || 0).toFixed(CURRENCY_DECIMAL_PLACES)}
+                    </td>
                   </tr>
                 ))
               ) : (

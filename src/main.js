@@ -696,14 +696,14 @@ function getNotFoundContent() {
 // Get page content based on pathname
 function getPageContent(pathname) {
   switch (pathname) {
-  case '/':
-    return getDashboardContent();
-  case '/orders':
-    return getOrdersContent();
-  case '/sync':
-    return getSyncContent();
-  default:
-    return getNotFoundContent();
+    case '/':
+      return getDashboardContent();
+    case '/orders':
+      return getOrdersContent();
+    case '/sync':
+      return getSyncContent();
+    default:
+      return getNotFoundContent();
   }
 }
 
@@ -744,7 +744,7 @@ process.on('SIGINT', () => shutdown('SIGINT'));
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 
 // Start the Node.js HTTP server
-const server = createServer(async(req, res) => {
+const server = createServer(async (req, res) => {
   try {
     const response = await handleNodeRequest(req);
 

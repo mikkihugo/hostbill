@@ -1,11 +1,4 @@
-import {
-  Links,
-  LiveReload,
-  Meta,
-  Outlet,
-  Scripts,
-  ScrollRestoration
-} from '@remix-run/react';
+import { Links, LiveReload, Meta, Outlet, Scripts, ScrollRestoration } from '@remix-run/react';
 
 export const meta = () => [
   { charset: 'utf-8' },
@@ -74,13 +67,22 @@ export default function App() {
                   </h1>
                 </div>
                 <div class="flex items-center space-x-4">
-                  <a href="/" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">
+                  <a
+                    href="/"
+                    class="text-gray-700 hover:text-blue-600 font-medium transition-colors"
+                  >
                     <i data-lucide="home" class="w-4 h-4 inline mr-1"></i>Dashboard
                   </a>
-                  <a href="/orders" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">
+                  <a
+                    href="/orders"
+                    class="text-gray-700 hover:text-blue-600 font-medium transition-colors"
+                  >
                     <i data-lucide="shopping-cart" class="w-4 h-4 inline mr-1"></i>Orders
                   </a>
-                  <a href="/sync" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">
+                  <a
+                    href="/sync"
+                    class="text-gray-700 hover:text-blue-600 font-medium transition-colors"
+                  >
                     <i data-lucide="refresh-cw" class="w-4 h-4 inline mr-1"></i>Sync
                   </a>
                 </div>

@@ -113,16 +113,16 @@ function validateEnvironmentVariable(key, value, schema) {
 
   // Type validation
   switch (schema.type) {
-  case 'string':
-    return validateString(value, schema);
-  case 'number':
-    return validateNumber(value, schema);
-  case 'boolean':
-    return validateBoolean(value);
-  case 'url':
-    return validateUrl(value);
-  default:
-    throw new Error(`Unknown schema type: ${schema.type}`);
+    case 'string':
+      return validateString(value, schema);
+    case 'number':
+      return validateNumber(value, schema);
+    case 'boolean':
+      return validateBoolean(value);
+    case 'url':
+      return validateUrl(value);
+    default:
+      throw new Error(`Unknown schema type: ${schema.type}`);
   }
 }
 

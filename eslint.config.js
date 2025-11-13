@@ -2,16 +2,16 @@ import js from '@eslint/js';
 
 export default [
   {
-    ignores: [
-      'node_modules/',
-      'dist/',
-      'build/',
-      'coverage/',
-      'test/.placeholder'
-    ]
+    ignores: ['node_modules/', 'dist/', 'build/', 'coverage/', 'test/.placeholder']
   },
   {
-    files: ['app/**/*.{js,jsx,ts,tsx}', 'src/lib/**/*.js', 'src/main.js', 'remix.config.js', 'server.js'],
+    files: [
+      'app/**/*.{js,jsx,ts,tsx}',
+      'src/lib/**/*.js',
+      'src/main.js',
+      'remix.config.js',
+      'server.js'
+    ],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',
@@ -43,14 +43,17 @@ export default [
     },
     rules: {
       ...js.configs.recommended.rules,
-      'indent': ['error', 2],
+      indent: 'off', // Prettier handles indentation
       'linebreak-style': ['error', 'unix'],
-      'quotes': ['error', 'single', { 'avoidEscape': true }],
-      'semi': ['error', 'always'],
-      'no-unused-vars': ['error', {
-        'argsIgnorePattern': '^_',
-        'varsIgnorePattern': '^_'
-      }],
+      quotes: ['error', 'single', { avoidEscape: true }],
+      semi: ['error', 'always'],
+      'no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_'
+        }
+      ],
       'no-console': ['warn'],
       'no-debugger': ['error'],
       'no-alert': ['error'],
@@ -82,31 +85,34 @@ export default [
       'func-call-spacing': ['error'],
       'key-spacing': ['error'],
       'keyword-spacing': ['error'],
-      'no-multiple-empty-lines': ['error', { 'max': 2 }],
+      'no-multiple-empty-lines': ['error', { max: 2 }],
       'no-trailing-spaces': ['error'],
       'object-curly-spacing': ['error', 'always'],
       'space-before-blocks': ['error'],
-      'space-before-function-paren': ['error', 'never'],
+      'space-before-function-paren': 'off', // Prettier handles this
       'space-in-parens': ['error'],
       'space-infix-ops': ['error'],
       'space-unary-ops': ['error'],
       'spaced-comment': ['error'],
-      'eqeqeq': ['error'],
+      eqeqeq: ['error'],
       'no-implicit-coercion': ['error'],
-      'no-magic-numbers': ['warn', {
-        'ignore': [0, 1, -1],
-        'ignoreArrayIndexes': true,
-        'enforceConst': true
-      }],
-      'radix': ['error'],
-      'yoda': ['error'],
-      'camelcase': ['error', { 'properties': 'never' }],
+      'no-magic-numbers': [
+        'warn',
+        {
+          ignore: [0, 1, -1],
+          ignoreArrayIndexes: true,
+          enforceConst: true
+        }
+      ],
+      radix: ['error'],
+      yoda: ['error'],
+      camelcase: ['error', { properties: 'never' }],
       'capitalized-comments': ['warn'],
       'consistent-this': ['error'],
       'func-name-matching': ['error'],
       'func-names': ['error', 'as-needed'],
-      'func-style': ['error', 'declaration', { 'allowArrowFunctions': true }],
-      'id-length': ['error', { 'min': 2, 'exceptions': ['i', 'j', 'k', 'x', 'y', 'z'] }],
+      'func-style': ['error', 'declaration', { allowArrowFunctions: true }],
+      'id-length': ['error', { min: 2, exceptions: ['i', 'j', 'k', 'x', 'y', 'z'] }],
       'max-depth': ['error', 4],
       'max-lines': ['warn', 1000],
       'max-lines-per-function': ['warn', 100],
@@ -117,7 +123,7 @@ export default [
       'new-cap': ['error'],
       'no-array-constructor': ['error'],
       'no-lonely-if': ['error'],
-      'no-mixed-operators': ['error'],
+      'no-mixed-operators': ['warn'],
       'no-multi-assign': ['error'],
       'no-nested-ternary': ['error'],
       'no-new-object': ['error'],
@@ -138,11 +144,14 @@ export default [
   {
     files: ['app/**/*.{jsx,tsx}'],
     rules: {
-      'no-unused-vars': ['error', {
-        'argsIgnorePattern': '^_',
-        'varsIgnorePattern': '^_|^[A-Z]',
-        'caughtErrorsIgnorePattern': '^_'
-      }]
+      'no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_|^[A-Z]',
+          caughtErrorsIgnorePattern: '^_'
+        }
+      ]
     }
   }
 ];

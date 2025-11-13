@@ -3,9 +3,7 @@
     "es2022": true,
     "node": true
   },
-  "extends": [
-    "eslint:recommended"
-  ],
+  "extends": ["eslint:recommended"],
   "parserOptions": {
     "ecmaVersion": 2022,
     "sourceType": "module"
@@ -15,10 +13,13 @@
     "linebreak-style": ["error", "unix"],
     "quotes": ["error", "single"],
     "semi": ["error", "always"],
-    "no-unused-vars": ["error", { 
-      "argsIgnorePattern": "^_",
-      "varsIgnorePattern": "^_" 
-    }],
+    "no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }
+    ],
     "no-console": ["warn"],
     "no-debugger": ["error"],
     "no-alert": ["error"],
@@ -61,11 +62,14 @@
     "spaced-comment": ["error"],
     "eqeqeq": ["error"],
     "no-implicit-coercion": ["error"],
-    "no-magic-numbers": ["warn", {
-      "ignore": [0, 1, -1],
-      "ignoreArrayIndexes": true,
-      "enforceConst": true
-    }],
+    "no-magic-numbers": [
+      "warn",
+      {
+        "ignore": [0, 1, -1],
+        "ignoreArrayIndexes": true,
+        "enforceConst": true
+      }
+    ],
     "radix": ["error"],
     "yoda": ["error"],
     "camelcase": ["error"],
