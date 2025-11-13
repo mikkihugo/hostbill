@@ -166,7 +166,7 @@ export async function action({ request }) {
 
 ### Prettier
 
-- 100 character line width
+- 100-character line width
 - Single quotes
 - 2-space indentation
 
