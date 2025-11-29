@@ -1,5 +1,5 @@
-import { defineConfig } from "$fresh/server.js";
+import { defineConfig } from '$fresh/server.js';
 
 export default defineConfig({
-  plugins: [],
+  plugins: []
 });

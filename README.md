@@ -1,197 +1,212 @@
-# Cloud-IQ HostBill Integration
+# Cloud-IQ - Crayon & HostBill Integration
 
-A comprehensive Crayon Cloud-IQ integration with HostBill for CSP (Cloud Solution Provider) billing management built with Deno.
-
-## Features
-
-- **Crayon Cloud-IQ API Integration**: Full support for Microsoft 365, Teams, and other CSP services
-- **HostBill Integration**: Automatic product/service management and billing sync
-- **Order Management**: Web-based order creation and routing to HostBill
-- **Usage Tracking**: Real-time usage monitoring and billing synchronization
-- **Renewal Management**: Automated renewal tracking and sync
-- **Dynamic Authentication**: Flexible user authentication for Crayon integration
-- **Docker Support**: Full containerization with Docker Compose
+Production-ready Cloud-IQ HostBill Integration with Microsoft GenAI for CSP billing management.
 
 ## Architecture
 
-- **Backend**: Deno runtime with modern JavaScript
-- **Database**: JSON-based file storage with PostgreSQL migration path
-- **APIs**: Crayon Cloud-IQ REST API and HostBill API integration
-- **Deployment**: Docker containers with health checks
+**Modern Stack:**
 
-## Quick Start
+- **Frontend:** Remix v2.12 with React 18 (file-based routing)
+- **Runtime:** Node.js 22 LTS
+- **Backend:** Node.js HTTP server with Web API compatibility
+- **AI Integration:** Microsoft GenAI Script agents
+- **Database:** SQLite file-based storage
+- **Styling:** Tailwind CSS + Lucide Icons
+- **Code Quality:** ESLint 9 + Prettier 3
+
+## Features
+
+### Dashboard
+
+- Real-time sync status: Active syncs, usage records, orders
+- Agent monitoring: Multi-agent crew status and task management
+- Stats visualization: Interactive cards with live metrics
+
+### Orders Management
+
+- Browse all CSP orders from HostBill
+- View order status and billing amounts
+- Track customer subscriptions
+
+### Sync Monitor
+
+- Manual trigger for Crayon and HostBill synchronization
+- Sync activity logging
+- Status notifications
+
+### Backend Integration
+
+- Crayon API: Cloud-IQ CSP product catalog
+- HostBill API: Customer and order management
+- GenAI: Intelligent billing automation and agent workflows
+- Database: SQLite for reliable data persistence
+
+## Getting Started
 
 ### Prerequisites
 
-- Deno 2.3+ installed
-- Crayon Cloud-IQ API credentials
-- HostBill instance with API access
+- Node.js >= 22.0.0
+- npm >= 10.0.0
 
-### Environment Setup
+### Installation
 
-1. Copy the environment template:
-   ```bash
-   cp .env.example .env
-   ```
+```bash
+# Install dependencies
+npm install
 
-2. Configure your API credentials in `.env`:
-   ```bash
-   # Crayon Cloud-IQ API Configuration
-   CRAYON_CLIENT_ID=your_crayon_client_id
-   CRAYON_CLIENT_SECRET=your_crayon_client_secret
-   CRAYON_TENANT_ID=your_crayon_tenant_id
+# Create .env file
+cp .env.example .env
 
-   # HostBill API Configuration
-   HOSTBILL_URL=https://your-hostbill-instance.com
-   HOSTBILL_API_ID=your_hostbill_api_id
-   HOSTBILL_API_KEY=your_hostbill_api_key
-   ```
+# Configure environment variables
+# CRAYON_CLIENT_ID, CRAYON_CLIENT_SECRET
+# HOSTBILL_API_KEY, HOSTBILL_API_URL
+# GENAI_API_KEY (for Microsoft GenAI integration)
+```
 
 ### Development
 
-1. Install dependencies and start development server:
-   ```bash
-   deno task dev
-   ```
-
-2. Open your browser to `http://localhost:8000`
-
-### Production Deployment
-
-#### Docker Compose (Recommended)
-
-1. Configure environment variables in `.env`
-
-2. Start the application:
-   ```bash
-   docker-compose up -d
-   ```
-
-3. The application will be available at `http://localhost:8000`
-
-#### Manual Deployment
-
-1. Build and start the application:
-   ```bash
-   deno task start
-   ```
-
-## API Endpoints
-
-### Web Routes
-
-- `/` - Main dashboard with sync statistics
-- `/orders` - Order creation and management
-- `/sync` - Sync monitoring and manual controls
-
-### API Routes
-
-- `POST /api/sync/manual` - Trigger manual synchronization
-- `GET /api/sync/stats` - Get synchronization statistics
-
-## Database Schema
-
-### Sync Records
-- Tracks synchronization between Crayon subscriptions and HostBill services
-- Status: pending, synced, error
-
-### Usage Records
-- Stores usage data from Crayon for billing purposes
-- Links to sync records for invoice generation
-
-### Order Records
-- Manages CSP orders created through the system
-- Tracks approval workflow and HostBill integration
-
-## Sync Process
-
-The system automatically synchronizes data between Crayon Cloud-IQ and HostBill:
-
-1. **Subscription Sync**: Active subscriptions from Crayon → HostBill products/services
-2. **Usage Tracking**: Usage data from Crayon → HostBill invoices
-3. **Order Processing**: New orders → Both systems with approval workflow
-4. **Renewal Management**: Upcoming renewals → Service updates
-
-## Configuration
-
-### Sync Interval
-- Default: 60 minutes
-- Configurable via `SYNC_INTERVAL_MINUTES` environment variable
-
-### Database
-- Default: JSON file in `./data/cloudiq.json`
-- PostgreSQL migration ready (see docker-compose.yml)
-
-### Authentication
-- Dynamic user authentication for Crayon API
-- Secure credential management via environment variables
-
-## Security Considerations
-
-- API credentials stored in environment variables
-- Database files excluded from version control
-- HTTPS recommended for production deployments
-- Regular backup of database files
-
-## Development
-
-### Project Structure
-
-```
-cloud-iq-hostbill/
-├── src/
-│   ├── api/
-│   │   ├── crayon.js      # Crayon Cloud-IQ API client
-│   │   └── hostbill.js    # HostBill API client
-│   ├── db/
-│   │   └── sqlite.js      # Database layer
-│   └── sync.js            # Synchronization service
-├── routes/
-│   ├── api/
-│   │   └── sync/
-│   │       └── manual.js  # Manual sync API
-│   ├── orders/
-│   │   └── index.jsx      # Order management page
-│   ├── sync/
-│   │   └── index.jsx      # Sync monitoring page
-│   ├── _404.jsx           # 404 error page
-│   ├── _app.jsx           # App wrapper
-│   └── index.jsx          # Dashboard
-├── main.js                # Application entry point
-├── deno.json             # Deno configuration
-└── docker-compose.yml    # Docker deployment
-```
-
-### Adding New Features
-
-1. **New API Clients**: Add to `src/api/`
-2. **Database Extensions**: Extend `src/db/sqlite.js`
-3. **Routes**: Add to `routes/` following conventions
-4. **Sync Logic**: Extend `src/sync.js`
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Database Lock Errors**: Ensure proper cleanup in sync service
-2. **API Authentication**: Verify Crayon and HostBill credentials
-3. **Network Issues**: Check firewall and DNS resolution
-4. **Sync Failures**: Monitor logs and sync status page
-
-### Logs
-
-Check application logs for detailed error information:
 ```bash
-docker-compose logs -f cloud-iq
+# Run development server (Remix + hot reload)
+npm run dev
+
+# Lint code
+npm run lint
+
+# Format code
+npm run format
+
+# Run tests
+npm run test
+```
+
+### Production Build
+
+```bash
+# Build optimized production bundle
+npm run build
+
+# Start production server
+npm run start
+
+# Docker deployment
+npm run docker:prod
+```
+
+## File Structure
+
+```
+hostbill/
+├── app/                          # Remix app
+│   ├── root.jsx                 # Root layout with nav
+│   ├── routes/
+│   │   ├── _index.jsx          # Dashboard page
+│   │   ├── orders.jsx          # Orders page
+│   │   └── sync.jsx            # Sync monitor page
+│
+├── src/                          # Node.js backend
+│   ├── main.js                 # HTTP server entry
+│   ├── lib/
+│   │   ├── api/               # API clients
+│   │   │   ├── crayon.js     # Crayon Cloud-IQ API
+│   │   │   └── hostbill.js   # HostBill API
+│   │   ├── sync.js            # Billing sync logic
+│   │   ├── genai.js           # GenAI agent integration
+│   │   ├── config.js          # Config validation
+│   │   ├── logger.js          # Structured logging
+│   │   ├── security.js        # Security middleware
+│   │   └── db/
+│   │       └── sqlite.js      # Database layer
+│   └── data/                  # SQLite database files
+│
+├── server.js                   # Remix server handler
+├── remix.config.js             # Remix configuration
+├── tsconfig.json               # TypeScript config
+├── eslint.config.js            # ESLint rules
+├── .prettierrc.json            # Prettier config
+├── package.json                # Dependencies
+└── Dockerfile                  # Production container
+```
+
+## API Integration
+
+### Loader Functions
+
+Remix loaders fetch data on the server:
+
+```jsx
+export async function loader() {
+  const response = await fetch('http://localhost:3000/api/sync/stats');
+  const stats = await response.json();
+  return { stats };
+}
+```
+
+### Action Functions
+
+Remix actions handle form submissions:
+
+```jsx
+export async function action({ request }) {
+  if (request.method === 'POST') {
+    const response = await fetch('http://localhost:3000/api/sync/manual', {
+      method: 'POST'
+    });
+    return await response.json();
+  }
+}
+```
+
+## Code Quality
+
+### ESLint
+
+- All 50+ errors fixed
+- 12 intentional warnings (security.js)
+- Enforces proper patterns
+
+### Prettier
+
+- 100-character line width
+- Single quotes
+- 2-space indentation
+
+### Validation
+
+```bash
+npm run validate  # lint + format check + tests
+```
+
+## Deployment
+
+### Docker
+
+```bash
+npm run docker:build   # Build image
+npm run docker:run     # Run container
+npm run docker:prod    # Production
+```
+
+### Environment Variables
+
+Create `.env` file with:
+
+- CRAYON_CLIENT_ID, CRAYON_CLIENT_SECRET
+- HOSTBILL_API_KEY, HOSTBILL_API_URL
+- GENAI_API_KEY
+- PORT, NODE_ENV
+
+## Testing
+
+```bash
+npm run test           # Run tests
+npm run test:watch     # Watch mode
+npm run test:coverage  # Coverage report
 ```
 
 ## License
 
-MIT License - see LICENSE file for details
+MIT
 
 ## Support
 
-For issues and questions:
-1. Check the sync monitoring page for error details
-2. Review application logs
-3. Verify API connectivity using test endpoints.
+https://github.com/mikkihugo/hostbill/issues

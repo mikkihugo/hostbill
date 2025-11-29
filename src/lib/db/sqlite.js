@@ -4,16 +4,16 @@
  * For production, replace with proper SQLite or PostgreSQL
  */
 
+/* eslint-disable no-console, no-magic-numbers */
 
-
-
-
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
 
 export class CloudIQDB {
   dbPath;
-  data!: DatabaseData; // Using definite assignment assertion
+  data; // Using definite assignment assertion
 
-  constructor(dbPath = "./data/cloudiq.json") {
+  constructor(dbPath = './data/cloudiq.json') {
     this.dbPath = dbPath;
     this.loadDatabase();
   }
@@ -23,15 +23,25 @@ export class CloudIQDB {
    */
   loadDatabase() {
     try {
-      const jsonData = Deno.readTextFileSync(this.dbPath);
-      this.data = JSON.parse(jsonData);
+      // Ensure directory exists
+      const dir = dirname(this.dbPath);
+      if (!existsSync(dir)) {
+        mkdirSync(dir, { recursive: true });
+      }
+
+      if (existsSync(this.dbPath)) {
+        const jsonData = readFileSync(this.dbPath, 'utf8');
+        this.data = JSON.parse(jsonData);
+      } else {
+        throw new Error('File does not exist');
+      }
     } catch {
       // Initialize empty database if file doesn't exist
       this.data = {
         syncRecords: [],
         usageRecords: [],
         orderRecords: [],
-        lastId: 0,
+        lastId: 0
       };
       this.saveDatabase();
     }
@@ -43,12 +53,12 @@ export class CloudIQDB {
   saveDatabase() {
     try {
       // Ensure directory exists
-      const dir = this.dbPath.substring(0, this.dbPath.lastIndexOf('/'));
-      if (dir) {
-        Deno.mkdirSync(dir, { recursive: true });
+      const dir = dirname(this.dbPath);
+      if (!existsSync(dir)) {
+        mkdirSync(dir, { recursive: true });
       }
-      
-      Deno.writeTextFileSync(this.dbPath, JSON.stringify(this.data, null, 2));
+
+      writeFileSync(this.dbPath, JSON.stringify(this.data, null, 2), 'utf8');
     } catch (error) {
       console.error('Failed to save database:', error);
     }
@@ -65,13 +75,14 @@ export class CloudIQDB {
   /**
    * Create or update sync record
    */
-  upsertSyncRecord(record: Omit<SyncRecord, 'id' | 'created_at' | 'updated_at'>) {
+  upsertSyncRecord(record) {
     const now = new Date().toISOString();
-    
+
     // Find existing record
     const existingIndex = this.data.syncRecords.findIndex(
-      r => r.hostbill_service_id === record.hostbill_service_id && 
-           r.crayon_subscription_id === record.crayon_subscription_id
+      existingRecord =>
+        existingRecord.hostbill_service_id === record.hostbill_service_id &&
+        existingRecord.crayon_subscription_id === record.crayon_subscription_id
     );
 
     if (existingIndex >= 0) {
@@ -80,98 +91,101 @@ export class CloudIQDB {
       this.data.syncRecords[existingIndex] = {
         ...existing,
         ...record,
-        updated_at: now,
+        updated_at: now
       };
       this.saveDatabase();
-      return existing.id!;
+      return existing.id;
     } else {
       // Create new
-      const newRecord: SyncRecord = {
+      const newRecord = {
         id: this.getNextId(),
         ...record,
         created_at: now,
-        updated_at: now,
+        updated_at: now
       };
       this.data.syncRecords.push(newRecord);
       this.saveDatabase();
-      return newRecord.id!;
+      return newRecord.id;
     }
   }
 
   /**
    * Get sync records by status
    */
-  getSyncRecords(status?): SyncRecord[] {
+  getSyncRecords(status) {
     let records = this.data.syncRecords;
-    
+
     if (status) {
-      records = records.filter(r => r.sync_status === status);
+      records = records.filter(syncRecord => syncRecord.sync_status === status);
     }
-    
-    return records.sort((a, b) => 
-      new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+
+    return records.sort(
+      (recordA, recordB) =>
+        new Date(recordB.updated_at).getTime() - new Date(recordA.updated_at).getTime()
     );
   }
 
   /**
    * Add usage record
    */
-  addUsageRecord(record: Omit<UsageRecord, 'id' | 'created_at'>) {
+  addUsageRecord(record) {
     const now = new Date().toISOString();
-    
+
     // Check for existing record (same subscription, date, period)
     const existingIndex = this.data.usageRecords.findIndex(
-      r => r.subscription_id === record.subscription_id &&
-           r.usage_date === record.usage_date &&
-           r.billing_period === record.billing_period
+      usageRecord =>
+        usageRecord.subscription_id === record.subscription_id &&
+        usageRecord.usage_date === record.usage_date &&
+        usageRecord.billing_period === record.billing_period
     );
 
     if (existingIndex >= 0) {
       // Update existing
       this.data.usageRecords[existingIndex] = {
         ...this.data.usageRecords[existingIndex],
-        ...record,
+        ...record
       };
       this.saveDatabase();
-      return this.data.usageRecords[existingIndex].id!;
+      return this.data.usageRecords[existingIndex].id;
     } else {
       // Create new
-      const newRecord: UsageRecord = {
+      const newRecord = {
         id: this.getNextId(),
         ...record,
-        created_at: now,
+        created_at: now
       };
       this.data.usageRecords.push(newRecord);
       this.saveDatabase();
-      return newRecord.id!;
+      return newRecord.id;
     }
   }
 
   /**
    * Get usage records for billing
    */
-  getUsageRecords(subscriptionId?, syncedOnly = false): UsageRecord[] {
+  getUsageRecords(subscriptionId, syncedOnly = false) {
     let records = this.data.usageRecords;
-    
+
     if (subscriptionId) {
-      records = records.filter(r => r.subscription_id === subscriptionId);
+      records = records.filter(usageRecord => usageRecord.subscription_id === subscriptionId);
     }
-    
+
     if (syncedOnly) {
-      records = records.filter(r => !r.synced_to_hostbill);
+      records = records.filter(usageRecord => !usageRecord.synced_to_hostbill);
     }
-    
-    return records.sort((a, b) => 
-      new Date(b.usage_date).getTime() - new Date(a.usage_date).getTime()
+
+    return records.sort(
+      (recordA, recordB) =>
+        new Date(recordB.usage_date).getTime() - new Date(recordA.usage_date).getTime()
     );
   }
 
   /**
    * Mark usage records as synced
    */
-  markUsageSynced(usageIds[]) {
+  markUsageSynced(usageIds) {
     for (const id of usageIds) {
-      const index = this.data.usageRecords.findIndex(r => r.id === id);
+      const index = this.data.usageRecords.findIndex(usageRecord => usageRecord.id === id);
       if (index >= 0) {
         this.data.usageRecords[index].synced_to_hostbill = true;
       }
@@ -182,28 +196,30 @@ export class CloudIQDB {
   /**
    * Create order record
    */
-  createOrderRecord(record: Omit<OrderRecord, 'id' | 'created_at' | 'updated_at'>) {
+  createOrderRecord(record) {
     const now = new Date().toISOString();
-    
-    const newRecord: OrderRecord = {
+
+    const newRecord = {
       id: this.getNextId(),
       ...record,
       created_at: now,
-      updated_at: now,
+      updated_at: now
     };
-    
+
     this.data.orderRecords.push(newRecord);
     this.saveDatabase();
-    return newRecord.id!;
+    return newRecord.id;
   }
 
   /**
    * Update order status
    */
-  updateOrderStatus(crayonOrderId, status, hostbillOrderId?) {
-    const index = this.data.orderRecords.findIndex(r => r.crayon_order_id === crayonOrderId);
+  updateOrderStatus(crayonOrderId, status, hostbillOrderId) {
+    const index = this.data.orderRecords.findIndex(
+      orderRecord => orderRecord.crayon_order_id === crayonOrderId
+    );
     if (index >= 0) {
-      this.data.orderRecords[index].status = status as any;
+      this.data.orderRecords[index].status = status;
       if (hostbillOrderId) {
         this.data.orderRecords[index].hostbill_order_id = hostbillOrderId;
       }
@@ -215,15 +231,16 @@ export class CloudIQDB {
   /**
    * Get order records
    */
-  getOrderRecords(status?): OrderRecord[] {
+  getOrderRecords(status) {
     let records = this.data.orderRecords;
-    
+
     if (status) {
-      records = records.filter(r => r.status === status);
+      records = records.filter(orderRecord => orderRecord.status === status);
     }
-    
-    return records.sort((a, b) => 
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+
+    return records.sort(
+      (recordA, recordB) =>
+        new Date(recordB.created_at).getTime() - new Date(recordA.created_at).getTime()
     );
   }
 
@@ -237,18 +254,18 @@ export class CloudIQDB {
   /**
    * Get database statistics
    */
-  getStats(): Record<string, any> {
+  getStats() {
     const syncStatusCounts = this.data.syncRecords.reduce((counts, record) => {
       counts[record.sync_status] = (counts[record.sync_status] || 0) + 1;
       return counts;
-    }, {} as Record<string, number>);
+    }, {});
 
     return {
       syncRecords: this.data.syncRecords.length,
       usageRecords: this.data.usageRecords.length,
       orderRecords: this.data.orderRecords.length,
       pendingSyncs: syncStatusCounts.pending || 0,
-      syncStatusCounts,
+      syncStatusCounts
     };
   }
 }
